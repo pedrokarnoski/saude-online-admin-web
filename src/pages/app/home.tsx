@@ -15,11 +15,10 @@ export function Home() {
       <Helmet title="Home" />
 
       <div className="p-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight xl:pl-80">
           O que você precisa hoje?
         </h1>
-
-        <div className="grid grid-cols-1 gap-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 py-6 sm:grid-cols-2 lg:grid-cols-3 xl:px-80">
           <FeatureCard
             icon={CalendarHeart}
             title="Agenda"
