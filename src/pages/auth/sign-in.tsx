@@ -1,13 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { Helmet } from 'react-helmet-async'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
+import { signIn } from '@/api/sign-in'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
+import { useToast } from '@/components/ui/use-toast'
+import { queryClient } from '@/lib/react-query'
+import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
 const signInForm = z.object({
   username: z.string().min(1, { message: 'Informe o nome de usuário.' }),
@@ -17,6 +22,10 @@ const signInForm = z.object({
 type SignInForm = z.infer<typeof signInForm>
 
 export function SignIn() {
+  const navigate = useNavigate()
+
+  const { toast } = useToast()
+
   const {
     register,
     handleSubmit,
@@ -25,8 +34,31 @@ export function SignIn() {
     resolver: zodResolver(signInForm),
   })
 
+  const { mutateAsync: authenticate } = useMutation({
+    mutationFn: signIn,
+  })
+
   async function handleSignIn(user: SignInForm) {
-    console.log(user)
+    try {
+      await authenticate({
+        username: user.username,
+        password: user.password,
+      })
+
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+
+      navigate('/', { replace: true })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+
+      console.log(error)
+
+      toast({
+        variant: 'destructive',
+        title: 'Acessar',
+        description: errorMessage,
+      })
+    }
   }
 
   return (
