@@ -37,7 +37,7 @@ export function AccountMenu() {
         <DropdownMenuTrigger asChild>
           <Button className="flex select-none items-center gap-2">
             Meu perfil
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
 
@@ -60,7 +60,7 @@ export function AccountMenu() {
           <DropdownMenuSeparator />
           <SheetTrigger asChild>
             <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
+              <User className="mr-2 size-4" />
               <span>Editar perfil</span>
             </DropdownMenuItem>
           </SheetTrigger>
@@ -70,7 +70,7 @@ export function AccountMenu() {
             className="text-rose-500 dark:text-rose-400"
           >
             <button className="w-full" onClick={() => signOutFn()}>
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 size-4" />
               <span>Sair</span>
             </button>
           </DropdownMenuItem>

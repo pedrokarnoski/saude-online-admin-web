@@ -2,7 +2,7 @@ import { api } from '@/lib/axios'
 
 export interface GetUserResponse {
   user: {
-    id: number
+    id: string
     name: string
     username: string
     password: string
