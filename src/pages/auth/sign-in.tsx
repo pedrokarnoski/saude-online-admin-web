@@ -51,7 +51,7 @@ export function SignIn() {
     } catch (error) {
       const errorMessage = axiosErrorHandler(error)
 
-      console.log(error)
+      console.error(error)
 
       toast({
         variant: 'destructive',

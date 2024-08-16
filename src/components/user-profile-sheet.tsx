@@ -43,7 +43,7 @@ const userProfileSchema = z
     },
     {
       message:
-        'Nova senha é obrigatória e deve seguir as regras se a senha antiga for fornecida',
+        'Nova senha é obrigatória e deve seguir as regras se a senha antiga for fornecida.',
       path: ['newPassword'],
     },
   )
@@ -111,26 +111,27 @@ export function UserProfileSheet() {
 
       <form onSubmit={handleSubmit(handleUpdateProfile)}>
         <div className="items-center space-y-2 pt-8">
-          <div className="grid grid-cols-2 items-center gap-2">
+          <div>
             <Label htmlFor="name">Nome completo</Label>
-            <Input className="col-span-3" id="name" {...register('name')} />
+            <Input className="mt-1" id="name" {...register('name')} />
           </div>
 
-          <div className="items-center space-y-2">
+          <div>
             <Label htmlFor="username">Username</Label>
             <Input
+              className="mt-1"
               disabled={true}
-              className="col-span-3"
               id="username"
               {...register('username')}
             />
           </div>
 
-          <div className="items-center space-y-2">
+          <div>
             <Label htmlFor="oldPassword">Senha antiga</Label>
             <PasswordInput
-              className="col-span-3"
+              className="mt-1"
               id="oldPassword"
+              placeholder="Digite a senha antiga"
               {...register('oldPassword')}
             />
           </div>
@@ -138,11 +139,12 @@ export function UserProfileSheet() {
             <p className="text-sm text-red-500">{errors.oldPassword.message}</p>
           )}
 
-          <div className="items-center space-y-2">
+          <div>
             <Label htmlFor="newPassword">Nova senha</Label>
             <PasswordInput
-              className="col-span-3"
+              className="mt-1"
               id="newPassword"
+              placeholder="Digite a nova senha"
               {...register('newPassword')}
             />
           </div>

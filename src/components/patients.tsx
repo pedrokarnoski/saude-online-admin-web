@@ -1,3 +1,5 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -15,12 +17,16 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
+  Plus,
   UserPen,
   UserPlus,
   UsersRound,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
+import { registerPatient } from '@/api/register-patient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,6 +43,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useToast } from '@/components/ui/use-toast'
+import { queryClient } from '@/lib/react-query'
+import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
 import {
   DropdownMenu,
@@ -55,6 +64,31 @@ export type Patient = {
   createdAt: Date
   updatedAt: Date
 }
+
+const newPatientForm = z.object({
+  name: z.string().min(3, { message: 'Digite o nome completo.' }),
+  age: z.coerce
+    .number()
+    .int()
+    .min(1, { message: 'Informe a idade do paciente.' })
+    .max(99),
+  document: z.string().refine(
+    (doc) => {
+      // Remove quaisquer caracteres não numéricos para facilitar a validação
+      const cleanedDoc = doc.replace(/\D/g, '')
+
+      const cpfRegex = /^\d{11}$/ // CPF deve ter 11 dígitos
+      const rgRegex = /^\d{9}$/ // RG geralmente tem 9 dígitos
+
+      return cpfRegex.test(cleanedDoc) || rgRegex.test(cleanedDoc)
+    },
+    {
+      message: 'Documento deve ser um CPF ou RG válido.',
+    },
+  ),
+})
+
+type NewPatientForm = z.infer<typeof newPatientForm>
 
 export const columns: ColumnDef<Patient>[] = [
   {
@@ -109,6 +143,9 @@ export const columns: ColumnDef<Patient>[] = [
 ]
 
 export function Patient({ data }: { data: Patient[] }) {
+  const { toast } = useToast()
+
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -138,6 +175,49 @@ export function Patient({ data }: { data: Patient[] }) {
     },
   })
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<NewPatientForm>({
+    resolver: zodResolver(newPatientForm),
+  })
+
+  const { mutateAsync: registerPatientFn } = useMutation({
+    mutationFn: registerPatient,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['patients'] })
+    },
+  })
+
+  async function handleCreateNewPatient(data: NewPatientForm) {
+    try {
+      await registerPatientFn({
+        name: data.name,
+        age: data.age,
+        document: data.document,
+      })
+
+      reset()
+      setIsPopoverOpen(false)
+
+      toast({
+        variant: 'default',
+        title: 'Pacientes',
+        description: 'Paciente cadastrado!',
+      })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+
+      toast({
+        variant: 'destructive',
+        title: 'Pacientes',
+        description: errorMessage,
+      })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-row items-center justify-between">
@@ -146,19 +226,76 @@ export function Patient({ data }: { data: Patient[] }) {
           <h1 className="text-2xl font-semibold tracking-tight">Pacientes</h1>
         </div>
 
-        <Popover>
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
                 className="w-full justify-start text-left font-normal md:px-8 lg:px-12"
+                onClick={() => setIsPopoverOpen(true)}
               >
-                <UserPlus className="mr-2 size-4 text-primary" />
+                <UserPlus size={4} className="mr-2 size-4 text-primary" />
                 Cadastrar novo
               </Button>
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-2"></PopoverContent>
+          <PopoverContent>
+            <form
+              className="items-center space-y-2"
+              onSubmit={handleSubmit(handleCreateNewPatient)}
+            >
+              <div>
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  className="mt-1"
+                  maxLength={50}
+                  placeholder="Nome completo"
+                  {...register('name')}
+                />
+              </div>
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name.message}</p>
+              )}
+              <div>
+                <Label htmlFor="age">Idade</Label>
+                <Input
+                  className="mt-1"
+                  maxLength={2}
+                  placeholder="Idade do paciente"
+                  {...register('age')}
+                />
+              </div>
+              {errors.age && (
+                <p className="text-sm text-red-500">{errors.age.message}</p>
+              )}
+              <div>
+                <Label htmlFor="document">Documento</Label>
+                <Input
+                  className="mt-1"
+                  maxLength={11}
+                  placeholder="CPF ou RG"
+                  {...register('document')}
+                />
+              </div>
+              {errors.document && (
+                <p className="text-sm text-red-500">
+                  {errors.document.message}
+                </p>
+              )}
+
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  variant="default"
+                  className="w-full gap-2"
+                >
+                  <Plus className="size-4" />
+                  Cadastrar
+                </Button>
+              </div>
+            </form>
+          </PopoverContent>
         </Popover>
       </div>
       <p className="text-sm text-muted-foreground">
