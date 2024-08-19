@@ -22,10 +22,12 @@ import {
   UserPlus,
   UsersRound,
 } from 'lucide-react'
+import { cpfMask, rgMask } from 'masks-br'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { deletePatient } from '@/api/delete-patient'
 import { registerPatient } from '@/api/register-patient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,11 +76,10 @@ const newPatientForm = z.object({
     .max(99),
   document: z.string().refine(
     (doc) => {
-      // Remove quaisquer caracteres não numéricos para facilitar a validação
       const cleanedDoc = doc.replace(/\D/g, '')
 
-      const cpfRegex = /^\d{11}$/ // CPF deve ter 11 dígitos
-      const rgRegex = /^\d{9}$/ // RG geralmente tem 9 dígitos
+      const cpfRegex = /^\d{11}$/
+      const rgRegex = /^\d{9}$/
 
       return cpfRegex.test(cleanedDoc) || rgRegex.test(cleanedDoc)
     },
@@ -90,58 +91,6 @@ const newPatientForm = z.object({
 
 type NewPatientForm = z.infer<typeof newPatientForm>
 
-export const columns: ColumnDef<Patient>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Nome',
-    cell: ({ row }) => (
-      <div className="w-56">
-        <Label>{row.getValue('name')}</Label>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'age',
-    header: 'Idade',
-    cell: ({ row }) => <Label>{row.getValue('age')}</Label>,
-  },
-  {
-    accessorKey: 'document',
-    header: 'Documento',
-    cell: ({ row }) => <Label>{row.getValue('document')}</Label>,
-  },
-  {
-    id: 'actions',
-    enableHiding: false,
-    cell: () => {
-      return (
-        <div className="w-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="size-8 p-0">
-                <span className="sr-only">Abrir menu</span>
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem className="gap-3" onClick={() => null}>
-                <Ban />
-                Excluir
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-3">
-                <UserPen />
-                Editar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    },
-  },
-]
-
 export function Patient({ data }: { data: Patient[] }) {
   const { toast } = useToast()
 
@@ -150,6 +99,73 @@ export function Patient({ data }: { data: Patient[] }) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  const columns: ColumnDef<Patient>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Nome',
+      cell: ({ row }) => (
+        <div className="w-56">
+          <Label>{row.getValue('name')}</Label>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'age',
+      header: 'Idade',
+      cell: ({ row }) => <Label>{row.getValue('age')} anos</Label>,
+    },
+    {
+      accessorKey: 'document',
+      header: 'Documento',
+      cell: ({ row }) => {
+        const document = String(row.getValue('document'))
+
+        return (
+          <Label>
+            {document.length === 9
+              ? 'RG: ' + rgMask(document)
+              : 'CPF: ' + cpfMask(document)}
+          </Label>
+        )
+      },
+    },
+    {
+      id: 'actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const patient = row.original
+
+        return (
+          <div className="w-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="size-8 p-0">
+                  <span className="sr-only">Abrir menu</span>
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                <DropdownMenuItem className="gap-2" onClick={() => null}>
+                  <UserPen className="size-4 text-primary" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => handleDeletePatient(patient.id)}
+                >
+                  <Ban className="size-4 text-rose-500" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      },
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -191,6 +207,13 @@ export function Patient({ data }: { data: Patient[] }) {
     },
   })
 
+  const { mutateAsync: deletePatientFn } = useMutation({
+    mutationFn: deletePatient,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['patients'] })
+    },
+  })
+
   async function handleCreateNewPatient(data: NewPatientForm) {
     try {
       await registerPatientFn({
@@ -206,6 +229,26 @@ export function Patient({ data }: { data: Patient[] }) {
         variant: 'default',
         title: 'Pacientes',
         description: 'Paciente cadastrado!',
+      })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+
+      toast({
+        variant: 'destructive',
+        title: 'Pacientes',
+        description: errorMessage,
+      })
+    }
+  }
+
+  async function handleDeletePatient(id: string) {
+    try {
+      await deletePatientFn({ id })
+
+      toast({
+        variant: 'default',
+        title: 'Pacientes',
+        description: 'Paciente excluído',
       })
     } catch (error) {
       const errorMessage = axiosErrorHandler(error)
