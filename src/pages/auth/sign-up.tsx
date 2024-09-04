@@ -38,7 +38,7 @@ export function SignUp() {
   })
 
   async function handleSignUp(user: SignUpForm) {
-    console.log(user)
+    console.error(user)
   }
 
   return (
