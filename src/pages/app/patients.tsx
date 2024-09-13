@@ -3,7 +3,7 @@ import { LoaderIcon, UsersRound } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 
 import { getPatients } from '@/api/get-patients'
-import { Patient } from '@/components/patients'
+import { PatientTable } from '@/components/patients-table'
 
 export function Patients() {
   const { data: result, isLoading: isLoadingPatients } = useQuery({
@@ -23,7 +23,7 @@ export function Patients() {
           </div>
         ) : result?.length ? (
           <>
-            <Patient data={result} />
+            <PatientTable data={result} />
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

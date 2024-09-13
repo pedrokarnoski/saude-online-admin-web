@@ -91,7 +91,7 @@ const newPatientForm = z.object({
 
 type NewPatientForm = z.infer<typeof newPatientForm>
 
-export function Patient({ data }: { data: Patient[] }) {
+export function PatientTable({ data }: { data: Patient[] }) {
   const { toast } = useToast()
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
@@ -277,7 +277,7 @@ export function Patient({ data }: { data: Patient[] }) {
                 className="w-full justify-start text-left font-normal md:px-8 lg:px-12"
                 onClick={() => setIsPopoverOpen(true)}
               >
-                <UserPlus size={4} className="mr-2 size-4 text-primary" />
+                <UserPlus className="mr-2 size-4 text-primary" />
                 Cadastrar novo
               </Button>
             </div>
