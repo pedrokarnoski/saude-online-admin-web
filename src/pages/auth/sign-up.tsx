@@ -1,13 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { Helmet } from 'react-helmet-async'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
+import { signUp } from '@/api/sign-up'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
+import { ToastAction } from '@/components/ui/toast'
+import { useToast } from '@/components/ui/use-toast'
+import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
 const signUpForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
@@ -29,6 +34,10 @@ const signUpForm = z.object({
 type SignUpForm = z.infer<typeof signUpForm>
 
 export function SignUp() {
+  const navigate = useNavigate()
+
+  const { toast } = useToast()
+
   const {
     register,
     handleSubmit,
@@ -37,8 +46,34 @@ export function SignUp() {
     resolver: zodResolver(signUpForm),
   })
 
+  const { mutateAsync: registerUser } = useMutation({
+    mutationFn: signUp,
+  })
+
   async function handleSignUp(user: SignUpForm) {
-    console.error(user)
+    try {
+      await registerUser({
+        name: user.name,
+        username: user.username,
+        password: user.password,
+      })
+
+      toast({
+        variant: 'default',
+        title: 'Criar conta',
+        description: 'Conta criada! Entre agora',
+        action: <ToastAction altText="Fazer login">Fazer login</ToastAction>,
+        onClick: () => navigate('/sign-in'),
+      })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+
+      toast({
+        variant: 'destructive',
+        title: 'Criar conta',
+        description: errorMessage,
+      })
+    }
   }
 
   return (
