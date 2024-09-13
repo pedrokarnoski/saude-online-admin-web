@@ -8,7 +8,7 @@ import { Financial } from '@/pages/app/financial'
 import { Home } from '@/pages/app/home'
 import { Patients } from '@/pages/app/patients'
 import { Prescription } from '@/pages/app/prescription'
-import { Schedule } from '@/pages/app/schedule'
+import { Schedules } from '@/pages/app/schedules'
 import { SignIn } from '@/pages/auth/sign-in'
 import { SignUp } from '@/pages/auth/sign-up'
 import { Error } from '@/pages/error'
@@ -24,7 +24,7 @@ export const router = createBrowserRouter([
       { path: '/financial', element: <Financial /> },
       { path: '/patients', element: <Patients /> },
       { path: '/prescription', element: <Prescription /> },
-      { path: '/schedule', element: <Schedule /> },
+      { path: '/schedule', element: <Schedules /> },
     ],
   },
   {
