@@ -418,7 +418,7 @@ export function PatientTable({ data }: { data: Patient[] }) {
           <div className="flex items-center justify-between py-4">
             <Label className="text-muted-foreground">
               Página {table.getState().pagination.pageIndex + 1} de{' '}
-              {table.getPageCount()}
+              {table.getPageCount() > 0 ? table.getPageCount() : 1}
             </Label>
             <div className="flex items-center space-x-3">
               <Button
