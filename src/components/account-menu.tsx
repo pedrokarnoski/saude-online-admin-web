@@ -35,7 +35,10 @@ export function AccountMenu() {
     <Sheet>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="flex select-none items-center gap-2">
+          <Button
+            variant="ghost"
+            className="flex select-none items-center gap-2"
+          >
             Meu perfil
             <ChevronDown className="size-4" />
           </Button>
