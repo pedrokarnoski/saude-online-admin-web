@@ -11,7 +11,7 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   ArrowUpDown,
@@ -54,19 +54,16 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export type Patient = {
+import { Patient as PatientProps } from './patients-table'
+
+export type Schedule = {
   id: string
-  date: string
+  dateHour: string
   hour: string
-  patient: {
-    id: string
-    name: string
-    age: number
-    document: string
-  }
+  patient: PatientProps
 }
 
-export const columns: ColumnDef<Patient>[] = [
+export const columns: ColumnDef<Schedule>[] = [
   {
     accessorFn: (row) => row.patient.name,
     id: 'patientName',
@@ -78,16 +75,22 @@ export const columns: ColumnDef<Patient>[] = [
     ),
   },
   {
-    accessorKey: 'date',
+    accessorKey: 'dateHour',
     header: 'Data',
-    cell: ({ row }) => (
-      <div>
-        <Label>{format(parseISO(row.getValue('date')), 'dd/MM/yyyy')}</Label>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const date = format(new Date(row.getValue('dateHour')), 'dd/MM/yyyy', {
+        locale: ptBR,
+      })
+
+      return (
+        <div>
+          <Label>{date}</Label>
+        </div>
+      )
+    },
   },
   {
-    accessorKey: 'hour',
+    accessorKey: 'dateHour',
     header: ({ column }) => {
       return (
         <Button
@@ -100,12 +103,18 @@ export const columns: ColumnDef<Patient>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => (
-      <div className="flex flex-row items-center gap-3">
-        <Sunrise className="h-5 w-5 text-yellow-200" />
-        <Label>{row.getValue('hour')}</Label>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const time = format(new Date(row.getValue('dateHour')), 'HH:mm', {
+        locale: ptBR,
+      })
+
+      return (
+        <div className="flex flex-row items-center gap-3">
+          <Sunrise className="h-5 w-5 text-yellow-200" />
+          <Label>{time}</Label>
+        </div>
+      )
+    },
   },
   {
     id: 'actions',
@@ -141,14 +150,16 @@ export const columns: ColumnDef<Patient>[] = [
 
 export function Schedule() {
   const { data: schedule = [], isLoading: isLoadingSchedule } = useQuery({
-    queryKey: ['schedule'],
+    queryKey: ['schedules'],
     queryFn: getSchedule,
     staleTime: Infinity,
   })
 
-  const [date, setDate] = useState<Date>()
+  const [dateHour, setDateHour] = useState<Date>(new Date())
   const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
+    { id: 'dateHour', value: format(new Date(), 'yyyy-MM-dd') },
+  ])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
@@ -176,14 +187,15 @@ export function Schedule() {
     },
   })
 
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate)
+  const handleDateHourSelect = (selectedDateHour: Date | undefined) => {
+    setDateHour(selectedDateHour)
 
-    if (selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd')
-      table.getColumn('date')?.setFilterValue(formattedDate)
+    if (selectedDateHour) {
+      const formattedDate = format(selectedDateHour, 'yyyy-MM-dd')
+
+      table.getColumn('dateHour')?.setFilterValue(formattedDate)
     } else {
-      table.getColumn('date')?.setFilterValue(undefined)
+      table.getColumn('dateHour')?.setFilterValue(undefined)
     }
   }
 
@@ -204,8 +216,8 @@ export function Schedule() {
                 className="w-full justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
-                {date ? (
-                  format(date, 'PPP', { locale: ptBR })
+                {dateHour ? (
+                  format(dateHour, 'PPP', { locale: ptBR })
                 ) : (
                   <span className="text-muted-foreground">
                     Selecione a data
@@ -217,8 +229,8 @@ export function Schedule() {
           <PopoverContent className="w-auto p-2">
             <Calendar
               mode="single"
-              selected={date}
-              onSelect={handleDateSelect}
+              selected={dateHour}
+              onSelect={handleDateHourSelect}
               initialFocus
             />
           </PopoverContent>
@@ -234,10 +246,13 @@ export function Schedule() {
             <Input
               placeholder="Pesquise aqui..."
               value={
-                (table.getColumn('name')?.getFilterValue() as string) ?? ''
+                (table.getColumn('patientName')?.getFilterValue() as string) ??
+                ''
               }
               onChange={(event) =>
-                table.getColumn('name')?.setFilterValue(event.target.value)
+                table
+                  .getColumn('patientName')
+                  ?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />
@@ -299,7 +314,7 @@ export function Schedule() {
                         colSpan={columns.length}
                         className="h-24 text-center"
                       >
-                        Nenhum resultado
+                        Nenhum agendamento para esta data ✌️😁
                       </TableCell>
                     </TableRow>
                   )}

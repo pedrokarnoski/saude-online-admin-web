@@ -6,9 +6,9 @@ import { getPatients } from '@/api/get-patients'
 import { PatientTable } from '@/components/patients-table'
 
 export function Patients() {
-  const { data: result, isLoading: isLoadingPatients } = useQuery({
+  const { data: patients, isLoading: isLoadingPatients } = useQuery({
     queryKey: ['patients'],
-    queryFn: () => getPatients(),
+    queryFn: getPatients,
     staleTime: Infinity,
   })
 
@@ -23,7 +23,7 @@ export function Patients() {
           </div>
         ) : (
           <>
-            <PatientTable data={result || []} />
+            <PatientTable data={patients || []} />
           </>
         )}
       </div>
