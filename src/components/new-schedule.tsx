@@ -1,4 +1,5 @@
-import { format } from 'date-fns'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { format, isBefore, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Calendar as CalendarIcon,
@@ -9,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { getPatients } from '@/api/get-patients'
+import { registerSchedule } from '@/api/register-schedule'
 import { TimeSlots } from '@/components/times-slots'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -26,26 +29,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { toast } from '@/components/ui/use-toast'
+import { queryClient } from '@/lib/react-query'
 import { cn } from '@/lib/utils'
+import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
-const clients = [
-  {
-    value: 'pedro',
-    label: 'Pedro',
-  },
-  {
-    value: 'henrique',
-    label: 'Henrique',
-  },
-]
+import { Patient as PatientProps } from './patients-table'
 
-const morningTimes = [
-  {
-    time: '08:00',
-  },
-  {
-    time: '08:30',
-  },
+const times = [
   {
     time: '09:00',
   },
@@ -63,12 +54,6 @@ const morningTimes = [
   },
   {
     time: '11:30',
-  },
-]
-
-const afternoonTimes = [
-  {
-    time: '13:00',
   },
   {
     time: '13:30',
@@ -93,28 +78,58 @@ const afternoonTimes = [
   },
 ]
 
-const nightTimes = [
-  {
-    time: '18:00',
-  },
-  {
-    time: '18:30',
-  },
-  {
-    time: '19:00',
-  },
-  {
-    time: '19:30',
-  },
-  {
-    time: '20:00',
-  },
-]
-
 export function NewSchedule() {
-  const [date, setDate] = useState<Date>()
+  const { data: patients } = useQuery({
+    queryKey: ['patients'],
+    queryFn: getPatients,
+    staleTime: Infinity,
+  })
+
+  const { mutateAsync: registerScheduleFn } = useMutation({
+    mutationFn: registerSchedule,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+    },
+  })
+
   const [open, setOpen] = useState<boolean>(false)
-  const [value, setValue] = useState<string>('')
+  const [patient, setPatient] = useState<PatientProps>()
+  const [date, setDate] = useState<Date>()
+  const [hour, setHour] = useState<string | null>(null)
+
+  async function handleCreateNewSchedule() {
+    try {
+      if (!patient || !date || !hour) {
+        return toast({
+          variant: 'destructive',
+          title: 'Agendamento',
+          description: 'Preencha todos os campos para agendar.',
+        })
+      }
+
+      const dateHour = date
+        ? format(date, 'yyyy-MM-dd') + 'T' + hour + ':00'
+        : ''
+
+      await registerScheduleFn({
+        patient: patient as PatientProps,
+        dateHour,
+      })
+
+      toast({
+        variant: 'default',
+        title: 'Agendamento',
+        description: 'Agendado realizado!',
+      })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+      toast({
+        variant: 'destructive',
+        title: 'Agendamento',
+        description: errorMessage,
+      })
+    }
+  }
 
   return (
     <div className="flex items-center">
@@ -128,7 +143,7 @@ export function NewSchedule() {
             </h1>
           </div>
           <p className="pb-2 text-sm text-muted-foreground">
-            Selecione data, horário e informe o nome do cliente para criar o
+            Selecione data, horário e informe o nome do paciente para criar o
             agendamento
           </p>
 
@@ -136,7 +151,7 @@ export function NewSchedule() {
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-lg">Cliente</Label>
+                  <Label className="text-lg">Paciente</Label>
                   <Button
                     size="lg"
                     variant="outline"
@@ -145,11 +160,11 @@ export function NewSchedule() {
                     className="w-full justify-start text-left font-normal hover:bg-black/30"
                   >
                     <UserRound className="mr-2 h-4 w-4 text-primary" />
-                    {value ? (
-                      clients.find((client) => client.value === value)?.label
+                    {patient ? (
+                      patients?.find((p) => p.name === patient.name)?.name
                     ) : (
                       <span className="text-muted-foreground">
-                        Selecione o cliente
+                        Selecione o paciente
                       </span>
                     )}
                   </Button>
@@ -160,34 +175,39 @@ export function NewSchedule() {
                   <div className="p-4">
                     <Button className="gap-3">
                       <CirclePlus />
-                      <Label>Adicionar novo cliente</Label>
+                      <Label>Adicionar novo paciente</Label>
                     </Button>
                   </div>
                   <CommandInput placeholder="Pesquise aqui..." />
 
                   <CommandList>
-                    <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                    <CommandEmpty>Nenhum paciente encontrado</CommandEmpty>
                     <CommandGroup>
-                      {clients.map((client) => (
-                        <CommandItem
-                          key={client.value}
-                          value={client.value}
-                          onSelect={(currentValue) => {
-                            setValue(currentValue === value ? '' : currentValue)
-                            setOpen(false)
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              value === client.value
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
-                          {client.label}
-                        </CommandItem>
-                      ))}
+                      {patients &&
+                        patients.map((p) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.name}
+                            onSelect={(currentValue) => {
+                              const selectedPatient = patients?.find(
+                                (p) => p.name === currentValue,
+                              )
+                              setPatient(selectedPatient)
+
+                              setOpen(false)
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                p.name === patient?.name
+                                  ? 'opacity-100'
+                                  : 'opacity-0',
+                              )}
+                            />
+                            {p.name}
+                          </CommandItem>
+                        ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -220,6 +240,10 @@ export function NewSchedule() {
                   selected={date}
                   onSelect={setDate}
                   initialFocus
+                  modifiers={{
+                    disabled: (date) =>
+                      !isToday(date) && isBefore(date, new Date()),
+                  }}
                 />
               </PopoverContent>
             </Popover>
@@ -227,15 +251,18 @@ export function NewSchedule() {
             <div className="flex flex-col gap-2 pb-4">
               <Label className="text-lg">Horários</Label>
 
-              <TimeSlots label="Manhã" times={morningTimes} />
-              <TimeSlots label="Tarde" times={afternoonTimes} />
-              <TimeSlots label="Noite" times={nightTimes} />
+              <TimeSlots
+                label="Selecione o horário da consulta"
+                times={times}
+                onSelect={setHour}
+              />
             </div>
 
             <Button
               size="lg"
               title="Realizar agendamento"
               className="w-full gap-2"
+              onClick={handleCreateNewSchedule}
             >
               <Check />
               Agendar

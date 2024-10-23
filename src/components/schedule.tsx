@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { getSchedule } from '@/api/get-schedule'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -42,6 +44,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -51,103 +54,43 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export type Client = {
-  id: number
-  name: string
-  phone: string
-  time: string
+import { Patient as PatientProps } from './patients-table'
+
+export type Schedule = {
+  id: string
+  dateHour: string
+  hour: string
+  patient: PatientProps
 }
 
-const data: Client[] = [
+export const columns: ColumnDef<Schedule>[] = [
   {
-    id: 1,
-    name: 'Pedro Henrique Karnoski',
-    phone: '(46) 99999-9999',
-    time: '08:00',
-  },
-  {
-    id: 2,
-    name: 'Henrique',
-    phone: '(46) 99999-9999',
-    time: '09:00',
-  },
-  {
-    id: 3,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 4,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 5,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 6,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 7,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 8,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 9,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 10,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-  {
-    id: 11,
-    name: 'Karnoski',
-    phone: '(46) 99999-9999',
-    time: '10:00',
-  },
-]
-
-export const columns: ColumnDef<Client>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Nome do cliente',
+    accessorFn: (row) => row.patient.name,
+    id: 'patientName',
+    header: 'Nome do paciente',
     cell: ({ row }) => (
       <div className="w-80 capitalize">
-        <Label>{row.getValue('name')}</Label>
+        <Label>{row.getValue('patientName')}</Label>
       </div>
     ),
   },
   {
-    accessorKey: 'phone',
-    header: 'Telefone',
-    cell: ({ row }) => (
-      <div>
-        <Label>{row.getValue('phone')}</Label>
-      </div>
-    ),
+    accessorKey: 'dateHour',
+    header: 'Data',
+    cell: ({ row }) => {
+      const date = format(new Date(row.getValue('dateHour')), 'dd/MM/yyyy', {
+        locale: ptBR,
+      })
+
+      return (
+        <div>
+          <Label>{date}</Label>
+        </div>
+      )
+    },
   },
   {
-    accessorKey: 'time',
+    accessorKey: 'dateHour',
     header: ({ column }) => {
       return (
         <Button
@@ -160,12 +103,18 @@ export const columns: ColumnDef<Client>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => (
-      <div className="flex flex-row items-center gap-3">
-        <Sunrise className="h-5 w-5 text-yellow-200" />
-        <Label>{row.getValue('time')}</Label>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const time = format(new Date(row.getValue('dateHour')), 'HH:mm', {
+        locale: ptBR,
+      })
+
+      return (
+        <div className="flex flex-row items-center gap-3">
+          <Sunrise className="h-5 w-5 text-yellow-200" />
+          <Label>{time}</Label>
+        </div>
+      )
+    },
   },
   {
     id: 'actions',
@@ -200,14 +149,22 @@ export const columns: ColumnDef<Client>[] = [
 ]
 
 export function Schedule() {
-  const [date, setDate] = useState<Date>()
+  const { data: schedule = [], isLoading: isLoadingSchedule } = useQuery({
+    queryKey: ['schedules'],
+    queryFn: getSchedule,
+    staleTime: Infinity,
+  })
+
+  const [dateHour, setDateHour] = useState<Date>(new Date())
   const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
+    { id: 'dateHour', value: format(new Date(), 'yyyy-MM-dd') },
+  ])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
   const table = useReactTable({
-    data,
+    data: schedule,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -230,6 +187,18 @@ export function Schedule() {
     },
   })
 
+  const handleDateHourSelect = (selectedDateHour: Date | undefined) => {
+    setDateHour(selectedDateHour)
+
+    if (selectedDateHour) {
+      const formattedDate = format(selectedDateHour, 'yyyy-MM-dd')
+
+      table.getColumn('dateHour')?.setFilterValue(formattedDate)
+    } else {
+      table.getColumn('dateHour')?.setFilterValue(undefined)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-row items-center justify-between">
@@ -247,8 +216,8 @@ export function Schedule() {
                 className="w-full justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
-                {date ? (
-                  format(date, 'PPP', { locale: ptBR })
+                {dateHour ? (
+                  format(dateHour, 'PPP', { locale: ptBR })
                 ) : (
                   <span className="text-muted-foreground">
                     Selecione a data
@@ -260,8 +229,8 @@ export function Schedule() {
           <PopoverContent className="w-auto p-2">
             <Calendar
               mode="single"
-              selected={date}
-              onSelect={setDate}
+              selected={dateHour}
+              onSelect={handleDateHourSelect}
               initialFocus
             />
           </PopoverContent>
@@ -277,96 +246,115 @@ export function Schedule() {
             <Input
               placeholder="Pesquise aqui..."
               value={
-                (table.getColumn('name')?.getFilterValue() as string) ?? ''
+                (table.getColumn('patientName')?.getFilterValue() as string) ??
+                ''
               }
               onChange={(event) =>
-                table.getColumn('name')?.setFilterValue(event.target.value)
+                table
+                  .getColumn('patientName')
+                  ?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />
             <div className="inline-flex gap-2 text-sm font-medium text-muted-foreground sm:text-base">
               Horários agendados{' '}
-              {/* {isLoadingTasks ? (
-              <TotalizerSkeleton />
-            ) : ( */}
-              <span className="items-center rounded-sm bg-primary px-3 text-white">
-                {table.getFilteredRowModel().rows.length}
-              </span>
-              {/* )} */}
+              {isLoadingSchedule ? (
+                <Skeleton className="h-6 w-8" />
+              ) : (
+                <span className="items-center rounded-sm bg-primary px-3 text-white">
+                  {table.getFilteredRowModel().rows.length}
+                </span>
+              )}
             </div>
           </div>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
+
+          {isLoadingSchedule ? (
+            <Skeleton className="h-64 w-full" />
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        )
+                      })}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      Nenhum resultado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        Nenhum agendamento para esta data ✌️😁
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
           <div className="flex items-center justify-between py-4">
-            <Label className="text-muted-foreground">
-              Página {table.getState().pagination.pageIndex + 1} de{' '}
-              {table.getPageCount() > 0 ? table.getPageCount() : 1}
-            </Label>
+            {isLoadingSchedule ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <Label className="text-muted-foreground">
+                Página {table.getState().pagination.pageIndex + 1} de{' '}
+                {table.getPageCount() > 0 ? table.getPageCount() : 1}
+              </Label>
+            )}
+
             <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <ChevronRight />
-              </Button>
+              {isLoadingSchedule ? (
+                <Skeleton className="h-10 w-24" />
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
