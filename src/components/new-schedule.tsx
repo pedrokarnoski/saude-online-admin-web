@@ -23,12 +23,14 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { ToastAction } from '@/components/ui/toast'
 import { toast } from '@/components/ui/use-toast'
 import { queryClient } from '@/lib/react-query'
 import { cn } from '@/lib/utils'
@@ -89,6 +91,18 @@ export function NewSchedule() {
     mutationFn: registerSchedule,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+
+      toast({
+        variant: 'default',
+        title: 'Agendamento',
+        description: 'Agendado realizado!',
+        action: (
+          <ToastAction altText="Fazer login">
+            Enviar lembrete por WhatsApp
+          </ToastAction>
+        ),
+        onClick: () => sendMessageWhatsApp(),
+      })
     },
   })
 
@@ -96,6 +110,25 @@ export function NewSchedule() {
   const [patient, setPatient] = useState<PatientProps>()
   const [date, setDate] = useState<Date>()
   const [hour, setHour] = useState<string | null>(null)
+
+  function sendMessageWhatsApp() {
+    const phone = patient?.phone
+
+    if (!phone) {
+      toast({
+        variant: 'destructive',
+        title: 'Número indisponível',
+        description: 'O paciente não tem número de WhatsApp cadastrado.',
+      })
+      return
+    }
+
+    const message = `Olá, ${patient.name}. Seu agendamento está confirmado para ${date ? format(date, 'PPP', { locale: ptBR }) : 'data não definida'} às ${hour}.`
+    const formattedMessage = encodeURIComponent(message)
+    const whatsAppUrl = `https://wa.me/${phone}?text=${formattedMessage}`
+
+    window.open(whatsAppUrl, '_blank')
+  }
 
   async function handleCreateNewSchedule() {
     try {
@@ -107,19 +140,12 @@ export function NewSchedule() {
         })
       }
 
-      const dateHour = date
-        ? format(date, 'yyyy-MM-dd') + 'T' + hour + ':00'
-        : ''
+      const dateHour =
+        date && hour ? `${format(date, 'yyyy-MM-dd')}T${hour}:00` : ''
 
       await registerScheduleFn({
         patient: patient as PatientProps,
         dateHour,
-      })
-
-      toast({
-        variant: 'default',
-        title: 'Agendamento',
-        description: 'Agendado realizado!',
       })
     } catch (error) {
       const errorMessage = axiosErrorHandler(error)
@@ -148,10 +174,14 @@ export function NewSchedule() {
           </p>
 
           <div className="flex flex-col space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="medic name">Médico</Label>
+              <Input className="h-12" disabled value="João da Silva" />
+            </div>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-lg">Paciente</Label>
+                  <Label htmlFor="patient name">Paciente</Label>
                   <Button
                     size="lg"
                     variant="outline"
@@ -217,7 +247,7 @@ export function NewSchedule() {
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-lg">Data</Label>
+                  <Label htmlFor="schedule date">Data</Label>
                   <Button
                     variant="outline"
                     size="lg"
@@ -253,6 +283,7 @@ export function NewSchedule() {
 
               <TimeSlots
                 label="Selecione o horário da consulta"
+                date={date ? format(date, 'yyyy-MM-dd') : ''}
                 times={times}
                 onSelect={setHour}
               />

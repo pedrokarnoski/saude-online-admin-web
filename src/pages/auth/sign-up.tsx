@@ -1,14 +1,19 @@
+import { spec } from 'node:test/reporters'
+
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
+import { getSpecialties } from '@/api/get-specialties'
 import { signUp } from '@/api/sign-up'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { PasswordInput } from '@/components/ui/password-input'
 import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
@@ -16,6 +21,16 @@ import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
 const signUpForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
+  crm: z
+    .string()
+    .min(10, { message: 'O CRM deve ter 10 caracteres.' })
+    .refine((value) => !value || /^CRM\/[A-Z]{2} \d{6}$/.test(value), {
+      message:
+        'O CRM deve seguir o formato "CRM/UF 123456", onde UF é a unidade federativa e 123456 é o número de 6 dígitos.',
+    }),
+  specialties: z.array(z.string()).refine((val) => val.length > 0, {
+    message: 'Por favor, selecione suas especialidades.',
+  }),
   username: z
     .string()
     .min(3, { message: 'O nome de usuário deve ter no mínimo 3 caracteres.' })
@@ -38,12 +53,22 @@ export function SignUp() {
 
   const { toast } = useToast()
 
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([])
+
   const {
     register,
     handleSubmit,
+    reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SignUpForm>({
     resolver: zodResolver(signUpForm),
+  })
+
+  const { data: specialties } = useQuery({
+    queryKey: ['specialties'],
+    queryFn: getSpecialties,
+    staleTime: Infinity,
   })
 
   const { mutateAsync: registerUser } = useMutation({
@@ -56,6 +81,9 @@ export function SignUp() {
         name: user.name,
         username: user.username,
         password: user.password,
+        crm: user.crm,
+        role: 'ADMIN',
+        specialties: selectedSpecialties,
       })
 
       toast({
@@ -65,6 +93,8 @@ export function SignUp() {
         action: <ToastAction altText="Fazer login">Fazer login</ToastAction>,
         onClick: () => navigate('/sign-in'),
       })
+
+      reset()
     } catch (error) {
       const errorMessage = axiosErrorHandler(error)
 
@@ -97,6 +127,34 @@ export function SignUp() {
               <Input id="name" type="text" {...register('name')} />
               {errors.name && (
                 <p className="text-sm text-red-500">{errors.name.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="crm">CRM</Label>
+              <Input id="crm" type="text" {...register('crm')} />
+              {errors.crm && (
+                <p className="text-sm text-red-500">{errors.crm.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="specialties">Especialidades</Label>
+              <MultiSelect
+                options={specialties ?? []}
+                onValueChange={(value) => {
+                  setSelectedSpecialties(value)
+
+                  setValue('specialties', value)
+                }}
+                defaultValue={selectedSpecialties}
+                placeholder=""
+                variant="inverted"
+                animation={2}
+                maxCount={3}
+              />
+              {errors.specialties && (
+                <p className="text-sm text-red-500">
+                  {errors.specialties.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">

@@ -63,6 +63,7 @@ export type Patient = {
   name: string
   age: number
   document: string
+  phone: string
   createdAt: Date
   updatedAt: Date
 }
