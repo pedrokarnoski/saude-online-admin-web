@@ -22,6 +22,7 @@ import {
   ChevronRight,
   MessageCircleWarning,
   MoreHorizontal,
+  SunMedium,
   Sunrise,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -108,9 +109,15 @@ export const columns: ColumnDef<Schedule>[] = [
         locale: ptBR,
       })
 
+      const hour = new Date(row.getValue('dateHour')).getHours()
+
       return (
         <div className="flex flex-row items-center gap-3">
-          <Sunrise className="h-5 w-5 text-yellow-200" />
+          {hour < 12 ? (
+            <Sunrise className="h-5 w-5 text-yellow-200" />
+          ) : (
+            <SunMedium className="h-5 w-5 text-yellow-500" />
+          )}
           <Label>{time}</Label>
         </div>
       )

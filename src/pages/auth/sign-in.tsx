@@ -68,7 +68,9 @@ export function SignIn() {
       <div className="flex flex-1 flex-col items-center justify-center p-8">
         <div className="flex w-[300px] flex-col justify-center gap-6 md:w-[500px]">
           <div className="flex flex-col gap-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Acessar</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Acessar painel
+            </h1>
             <p className="text-sm text-muted-foreground">
               Olá, seja bem-vindo(a)!
             </p>
