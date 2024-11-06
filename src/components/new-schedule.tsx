@@ -39,7 +39,7 @@ import { queryClient } from '@/lib/react-query'
 import { cn } from '@/lib/utils'
 import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
-export interface DoctorProps {
+export interface SpecialistProps {
   id: string
   name: string
   username: string
@@ -111,12 +111,17 @@ export function NewSchedule() {
     staleTime: Infinity,
   })
 
-  const doctors = Array.isArray(users) ? users : []
+  const specialists = Array.isArray(users) ? users : []
 
   const { mutateAsync: registerScheduleFn } = useMutation({
     mutationFn: registerSchedule,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+
+      setDate(undefined)
+      setPatient(undefined)
+      setHour(null)
+      setSpecialist(user?.crm ? user : null)
 
       toast({
         variant: 'default',
@@ -132,7 +137,7 @@ export function NewSchedule() {
     },
   })
 
-  const [specialist, setSpecialist] = useState<DoctorProps | null>(
+  const [specialist, setSpecialist] = useState<SpecialistProps | null>(
     user?.crm ? user : null,
   )
   const [patient, setPatient] = useState<PatientProps>()
@@ -172,7 +177,8 @@ export function NewSchedule() {
         date && hour ? `${format(date, 'yyyy-MM-dd')}T${hour}:00` : ''
 
       await registerScheduleFn({
-        patient: patient as PatientProps,
+        specialistId: specialist?.id ?? '',
+        patientId: patient.id,
         dateHour,
       })
     } catch (error) {
@@ -219,7 +225,8 @@ export function NewSchedule() {
                     >
                       <Stethoscope className="mr-2 h-4 w-4 text-primary" />
                       {specialist ? (
-                        doctors?.find((p) => p.name === specialist.name)?.name
+                        specialists?.find((p) => p.name === specialist.name)
+                          ?.name
                       ) : (
                         <span className="text-muted-foreground">
                           Selecione o médico
@@ -235,12 +242,12 @@ export function NewSchedule() {
                     <CommandList>
                       <CommandEmpty>Nenhum médico encontrado</CommandEmpty>
                       <CommandGroup>
-                        {doctors.map((u) => (
+                        {specialists.map((u) => (
                           <CommandItem
                             key={u.id}
                             value={u.name}
                             onSelect={(currentValue) => {
-                              const selectedUser = doctors.find(
+                              const selectedUser = specialists.find(
                                 (doc) => doc.name === currentValue,
                               )
                               if (selectedUser) {

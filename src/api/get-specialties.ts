@@ -23,7 +23,7 @@ export async function getSpecialties(): Promise<SpecialtyOption[]> {
           label: specialty.name,
         }),
       )
-      console.log('Especialidades formatadas:', formattedSpecialties)
+
       return formattedSpecialties
     }
 
