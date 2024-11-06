@@ -16,19 +16,19 @@ export async function getSpecialties(): Promise<SpecialtyOption[]> {
   try {
     const response = await api.get<GetSpecialtiesResponse>('/specialties')
 
-    if (response.data && response.data.specialties) {
+    if (response.data?.specialties) {
       const formattedSpecialties = response.data.specialties.map(
         (specialty) => ({
           value: specialty.id,
           label: specialty.name,
         }),
       )
-      console.log('Especialidades formatadas:', formattedSpecialties)
+
       return formattedSpecialties
-    } else {
-      console.warn('Nenhuma especialidade encontrada no retorno da API.')
-      return []
     }
+
+    console.warn('Nenhuma especialidade encontrada no retorno da API.')
+    return []
   } catch (error) {
     console.error('Erro ao buscar especialidades:', error)
     return []

@@ -23,14 +23,13 @@ const signUpForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
   crm: z
     .string()
-    .min(10, { message: 'O CRM deve ter 10 caracteres.' })
+    .optional()
+    .or(z.literal(''))
     .refine((value) => !value || /^CRM\/[A-Z]{2} \d{6}$/.test(value), {
       message:
         'O CRM deve seguir o formato "CRM/UF 123456", onde UF é a unidade federativa e 123456 é o número de 6 dígitos.',
     }),
-  specialties: z.array(z.string()).refine((val) => val.length > 0, {
-    message: 'Por favor, selecione suas especialidades.',
-  }),
+  specialties: z.array(z.string()).optional(),
   username: z
     .string()
     .min(3, { message: 'O nome de usuário deve ter no mínimo 3 caracteres.' })

@@ -1,17 +1,12 @@
 import { api } from '@/lib/axios'
 
+import type { PatientProps } from './get-user'
+
 export interface GetScheduleResponse {
   schedules: {
     id: string
     patientId: string
-    patient: {
-      id: string
-      name: string
-      age: number
-      document: string
-      createAt: Date
-      updatedAt: Date
-    }[]
+    patient: PatientProps[]
     date: string
     hour: string
     createdAt: Date
@@ -20,7 +15,7 @@ export interface GetScheduleResponse {
 }
 
 export async function getSchedule() {
-  const response = await api.get<GetScheduleResponse>(`/schedules`)
+  const response = await api.get<GetScheduleResponse>('/schedules')
 
   return response.data.schedules
 }

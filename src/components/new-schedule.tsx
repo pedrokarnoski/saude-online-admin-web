@@ -6,11 +6,14 @@ import {
   Check,
   CirclePlus,
   Clock,
+  Stethoscope,
   UserRound,
 } from 'lucide-react'
 import { useState } from 'react'
 
 import { getPatients } from '@/api/get-patients'
+import { getUser, type PatientProps } from '@/api/get-user'
+import { getUsers } from '@/api/get-users'
 import { registerSchedule } from '@/api/register-schedule'
 import { TimeSlots } from '@/components/times-slots'
 import { Button } from '@/components/ui/button'
@@ -36,7 +39,16 @@ import { queryClient } from '@/lib/react-query'
 import { cn } from '@/lib/utils'
 import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
-import { Patient as PatientProps } from './patients-table'
+export interface SpecialistProps {
+  id: string
+  name: string
+  username: string
+  crm: string
+  role: string
+  patient: PatientProps
+  createdAt: Date
+  updatedAt: Date
+}
 
 const times = [
   {
@@ -87,10 +99,29 @@ export function NewSchedule() {
     staleTime: Infinity,
   })
 
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: getUser,
+    staleTime: Infinity,
+  })
+
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => getUsers({ isDoctor: true }),
+    staleTime: Infinity,
+  })
+
+  const specialists = Array.isArray(users) ? users : []
+
   const { mutateAsync: registerScheduleFn } = useMutation({
     mutationFn: registerSchedule,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+
+      setDate(undefined)
+      setPatient(undefined)
+      setHour(null)
+      setSpecialist(user?.crm ? user : null)
 
       toast({
         variant: 'default',
@@ -106,7 +137,9 @@ export function NewSchedule() {
     },
   })
 
-  const [open, setOpen] = useState<boolean>(false)
+  const [specialist, setSpecialist] = useState<SpecialistProps | null>(
+    user?.crm ? user : null,
+  )
   const [patient, setPatient] = useState<PatientProps>()
   const [date, setDate] = useState<Date>()
   const [hour, setHour] = useState<string | null>(null)
@@ -144,7 +177,8 @@ export function NewSchedule() {
         date && hour ? `${format(date, 'yyyy-MM-dd')}T${hour}:00` : ''
 
       await registerScheduleFn({
-        patient: patient as PatientProps,
+        specialistId: specialist?.id ?? '',
+        patientId: patient.id,
         dateHour,
       })
     } catch (error) {
@@ -174,20 +208,78 @@ export function NewSchedule() {
           </p>
 
           <div className="flex flex-col space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="medic name">Médico</Label>
-              <Input className="h-12" disabled value="João da Silva" />
-            </div>
-            <Popover open={open} onOpenChange={setOpen}>
+            {user?.crm ? (
+              <div className="space-y-1">
+                <Label htmlFor="medic name">Médico</Label>
+                <Input className="h-12" disabled value={user?.name} />
+              </div>
+            ) : (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="patient name">Médico</Label>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <Stethoscope className="mr-2 h-4 w-4 text-primary" />
+                      {specialist ? (
+                        specialists?.find((p) => p.name === specialist.name)
+                          ?.name
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Selecione o médico
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2">
+                  <Command>
+                    <CommandInput placeholder="Pesquise aqui..." />
+
+                    <CommandList>
+                      <CommandEmpty>Nenhum médico encontrado</CommandEmpty>
+                      <CommandGroup>
+                        {specialists.map((u) => (
+                          <CommandItem
+                            key={u.id}
+                            value={u.name}
+                            onSelect={(currentValue) => {
+                              const selectedUser = specialists.find(
+                                (doc) => doc.name === currentValue,
+                              )
+                              if (selectedUser) {
+                                setSpecialist(selectedUser)
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                u.name === specialist?.name
+                                  ? 'opacity-100'
+                                  : 'opacity-0',
+                              )}
+                            />
+                            {u.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+            <Popover>
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="patient name">Paciente</Label>
                   <Button
                     size="lg"
                     variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-start text-left font-normal hover:bg-black/30"
+                    className="w-full justify-start text-left font-normal"
                   >
                     <UserRound className="mr-2 h-4 w-4 text-primary" />
                     {patient ? (
@@ -213,31 +305,28 @@ export function NewSchedule() {
                   <CommandList>
                     <CommandEmpty>Nenhum paciente encontrado</CommandEmpty>
                     <CommandGroup>
-                      {patients &&
-                        patients.map((p) => (
-                          <CommandItem
-                            key={p.id}
-                            value={p.name}
-                            onSelect={(currentValue) => {
-                              const selectedPatient = patients?.find(
-                                (p) => p.name === currentValue,
-                              )
-                              setPatient(selectedPatient)
-
-                              setOpen(false)
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                p.name === patient?.name
-                                  ? 'opacity-100'
-                                  : 'opacity-0',
-                              )}
-                            />
-                            {p.name}
-                          </CommandItem>
-                        ))}
+                      {patients?.map((p) => (
+                        <CommandItem
+                          key={p.id}
+                          value={p.name}
+                          onSelect={(currentValue) => {
+                            const selectedPatient = patients?.find(
+                              (p) => p.name === currentValue,
+                            )
+                            setPatient(selectedPatient)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              p.name === patient?.name
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                          {p.name}
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -251,7 +340,7 @@ export function NewSchedule() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full justify-start text-left font-normal hover:bg-black/30"
+                    className="w-full justify-start text-left font-normal"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                     {date ? (

@@ -40,11 +40,23 @@ export function SignIn() {
 
   async function handleSignIn(user: SignInForm) {
     try {
-      await authenticate({
+      const authenticatedUser = await authenticate({
         username: user.username,
         password: user.password,
       })
 
+      // Verificando se é USER
+      if (authenticatedUser.role === 'USER') {
+        toast({
+          variant: 'destructive',
+          title: 'Acesso restrito',
+          description:
+            'Você não tem permissão para acessar o painel de administração.',
+        })
+        return
+      }
+
+      // ADMIN
       queryClient.invalidateQueries({ queryKey: ['user'] })
 
       navigate('/', { replace: true })

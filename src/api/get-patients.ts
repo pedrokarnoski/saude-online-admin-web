@@ -13,7 +13,7 @@ export interface GetPatientsResponse {
 }
 
 export async function getPatients() {
-  const response = await api.get<GetPatientsResponse>(`/patients`)
+  const response = await api.get<GetPatientsResponse>('/patients')
 
   return response.data.patients
 }

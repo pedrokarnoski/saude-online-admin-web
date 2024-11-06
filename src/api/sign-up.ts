@@ -3,7 +3,7 @@ import { api } from '@/lib/axios'
 export interface SignUpBody {
   name: string
   username: string
-  crm: string
+  crm?: string
   password: string
   role: string
   specialties: string[]
