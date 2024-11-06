@@ -58,16 +58,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 
-export type Patient = {
-  id: string
-  name: string
-  age: number
-  document: string
-  phone: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 const newPatientForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
   age: z.coerce
@@ -88,6 +78,20 @@ const newPatientForm = z.object({
       message: 'Documento deve ser um CPF ou RG válido.',
     },
   ),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (phone) => {
+        if (!phone) return true
+
+        const cleanedPhone = phone.replace(/\D/g, '')
+        return cleanedPhone.length === 11
+      },
+      {
+        message: 'Telefone deve ser um número de celular válido.',
+      },
+    ),
 })
 
 type NewPatientForm = z.infer<typeof newPatientForm>
@@ -125,8 +129,8 @@ export function PatientTable({ data }: { data: Patient[] }) {
         return (
           <Label>
             {document.length === 9
-              ? 'RG: ' + rgMask(document)
-              : 'CPF: ' + cpfMask(document)}
+              ? `RG: ${rgMask(document)}`
+              : `CPF: ${cpfMask(document)}`}
           </Label>
         )
       },
@@ -325,6 +329,18 @@ export function PatientTable({ data }: { data: Patient[] }) {
                 <p className="text-sm text-red-500">
                   {errors.document.message}
                 </p>
+              )}
+              <div>
+                <Label htmlFor="document">Telefone (WhatsApp)</Label>
+                <Input
+                  className="mt-1"
+                  maxLength={11}
+                  placeholder="Com DDD"
+                  {...register('phone')}
+                />
+              </div>
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone.message}</p>
               )}
 
               <div className="pt-4">
