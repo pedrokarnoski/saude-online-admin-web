@@ -225,6 +225,7 @@ export function PatientTable({ data }: { data: Patient[] }) {
         name: data.name,
         age: data.age,
         document: data.document,
+        phone: data.phone,
       })
 
       reset()
