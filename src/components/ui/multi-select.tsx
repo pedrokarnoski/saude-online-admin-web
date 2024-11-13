@@ -1,11 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import {
-  CheckIcon,
-  ChevronDown,
-  WandSparkles,
-  XCircle,
-  XIcon,
-} from 'lucide-react'
+import { CheckIcon, ChevronDown, XCircle, XIcon } from 'lucide-react'
 import * as React from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -140,7 +134,7 @@ export const MultiSelect = React.forwardRef<
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue)
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
-    const [isAnimating, setIsAnimating] = React.useState(false)
+    const [isAnimating] = React.useState(false)
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>,
@@ -176,16 +170,6 @@ export const MultiSelect = React.forwardRef<
       const newSelectedValues = selectedValues.slice(0, maxCount)
       setSelectedValues(newSelectedValues)
       onValueChange(newSelectedValues)
-    }
-
-    const toggleAll = () => {
-      if (selectedValues.length === options.length) {
-        handleClear()
-      } else {
-        const allValues = options.map((option) => option.value)
-        setSelectedValues(allValues)
-        onValueChange(allValues)
-      }
     }
 
     return (

@@ -28,6 +28,7 @@ import {
 import { useState } from 'react'
 
 import { getSchedule } from '@/api/get-schedule'
+import type { PatientProps } from '@/api/get-user'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -54,8 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
-import { Patient as PatientProps } from './patients-table'
 
 export type Schedule = {
   id: string
@@ -171,7 +170,7 @@ export function Schedule() {
   const [rowSelection, setRowSelection] = useState({})
 
   const table = useReactTable({
-    data: schedule,
+    data: schedule as Schedule[],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -195,7 +194,9 @@ export function Schedule() {
   })
 
   const handleDateHourSelect = (selectedDateHour: Date | undefined) => {
-    setDateHour(selectedDateHour)
+    if (selectedDateHour) {
+      setDateHour(selectedDateHour)
+    }
 
     if (selectedDateHour) {
       const formattedDate = format(selectedDateHour, 'yyyy-MM-dd')
