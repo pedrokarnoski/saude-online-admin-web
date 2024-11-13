@@ -28,8 +28,17 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { deletePatient } from '@/api/delete-patient'
+import { type PatientProps } from '@/api/get-user'
 import { registerPatient } from '@/api/register-patient'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -48,15 +57,6 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { queryClient } from '@/lib/react-query'
 import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu'
 
 const newPatientForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
@@ -96,7 +96,7 @@ const newPatientForm = z.object({
 
 type NewPatientForm = z.infer<typeof newPatientForm>
 
-export function PatientTable({ data }: { data: Patient[] }) {
+export function PatientTable({ data }: { data: PatientProps[] }) {
   const { toast } = useToast()
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
@@ -105,7 +105,7 @@ export function PatientTable({ data }: { data: Patient[] }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const columns: ColumnDef<Patient>[] = [
+  const columns: ColumnDef<PatientProps>[] = [
     {
       accessorKey: 'name',
       header: 'Nome',
