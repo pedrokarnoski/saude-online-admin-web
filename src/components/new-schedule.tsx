@@ -4,14 +4,15 @@ import { ptBR } from 'date-fns/locale'
 import {
   Calendar as CalendarIcon,
   Check,
-  CirclePlus,
   Clock,
+  Heart,
   Stethoscope,
   UserRound,
 } from 'lucide-react'
 import { useState } from 'react'
 
 import { getPatients } from '@/api/get-patients'
+import { getSpecialties } from '@/api/get-specialties'
 import { getUser, type PatientProps } from '@/api/get-user'
 import { getUsers } from '@/api/get-users'
 import { registerSchedule } from '@/api/register-schedule'
@@ -99,6 +100,18 @@ export function NewSchedule() {
     staleTime: Infinity,
   })
 
+  const {
+    data: specialties = [] as {
+      id: string
+      name: string
+      formattedValue: string
+    }[],
+  } = useQuery({
+    queryKey: ['specialties'],
+    queryFn: getSpecialties,
+    staleTime: Infinity,
+  })
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: getUser,
@@ -121,6 +134,7 @@ export function NewSchedule() {
       setDate(undefined)
       setPatient(undefined)
       setHour(null)
+      setSpecialty(null)
       setSpecialist(user?.crm ? user : null)
 
       toast({
@@ -137,6 +151,17 @@ export function NewSchedule() {
     },
   })
 
+  const [openPopover, setOpenPopover] = useState<string | null>(null)
+
+  const handleOpenChange = (id: string, isOpen: boolean) => {
+    setOpenPopover(isOpen ? id : null)
+  }
+
+  const [specialty, setSpecialty] = useState<{
+    id: string
+    name: string
+    formattedValue: string
+  } | null>(null)
   const [specialist, setSpecialist] = useState<SpecialistProps | null>(
     user?.crm ? user : null,
   )
@@ -163,6 +188,18 @@ export function NewSchedule() {
     window.open(whatsAppUrl, '_blank')
   }
 
+  const filteredDoctors = specialty
+    ? users?.filter(
+        (doctor) =>
+          Array.isArray(doctor.specialties) &&
+          doctor.specialties.some(
+            (docSpecialty: { id: string }) => docSpecialty.id === specialty.id,
+          ),
+      )
+    : users
+
+  console.log(patients)
+
   async function handleCreateNewSchedule() {
     try {
       if (!patient || !date || !hour) {
@@ -178,10 +215,12 @@ export function NewSchedule() {
 
       await registerScheduleFn({
         specialistId: specialist?.id ?? '',
-        patientId: patient.id,
+        specialtyId: specialty?.id ?? '',
+        patientId: patient.id ?? '',
         dateHour,
       })
     } catch (error) {
+      console.log(error, 'error')
       const errorMessage = axiosErrorHandler(error)
       toast({
         variant: 'destructive',
@@ -214,65 +253,134 @@ export function NewSchedule() {
                 <Input className="h-12" disabled value={user?.name} />
               </div>
             ) : (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="patient name">Médico</Label>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <Stethoscope className="mr-2 h-4 w-4 text-primary" />
-                      {specialist ? (
-                        specialists?.find((p) => p.name === specialist.name)
-                          ?.name
-                      ) : (
-                        <span className="text-muted-foreground">
-                          Selecione o médico
-                        </span>
-                      )}
-                    </Button>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2">
-                  <Command>
-                    <CommandInput placeholder="Pesquise aqui..." />
+              <>
+                <Popover
+                  open={openPopover === 'specialty'}
+                  onOpenChange={(isOpen) =>
+                    handleOpenChange('specialty', isOpen)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <div className="flex flex-col gap-2">
+                      <Label>Especialidade</Label>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <Heart className="mr-4 h-4 w-4 text-primary" />
+                        {specialty ? (
+                          specialty.name
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Selecione a especialidade
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2">
+                    <Command>
+                      <CommandInput placeholder="Pesquise especialidades..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          Nenhuma especialidade encontrada
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {Array.isArray(specialties) &&
+                            specialties.map((spec) => (
+                              <CommandItem
+                                key={spec.id}
+                                onSelect={() => {
+                                  setSpecialty(spec)
+                                  setOpenPopover(null)
+                                }}
+                              >
+                                <div className="flex w-full items-center">
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      spec.name === specialty?.name
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                  <p className="flex-grow">{spec.name}</p>
+                                  <p className="ml-auto pl-10 font-semibold">
+                                    {spec.formattedValue}
+                                  </p>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
 
-                    <CommandList>
-                      <CommandEmpty>Nenhum médico encontrado</CommandEmpty>
-                      <CommandGroup>
-                        {specialists.map((u) => (
-                          <CommandItem
-                            key={u.id}
-                            value={u.name}
-                            onSelect={(currentValue) => {
-                              const selectedUser = specialists.find(
-                                (doc) => doc.name === currentValue,
-                              )
-                              if (selectedUser) {
-                                setSpecialist(selectedUser)
-                              }
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                u.name === specialist?.name
-                                  ? 'opacity-100'
-                                  : 'opacity-0',
-                              )}
-                            />
-                            {u.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                <Popover
+                  open={openPopover === 'specialist'}
+                  onOpenChange={(isOpen) =>
+                    handleOpenChange('specialist', isOpen)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="patient name">Médico</Label>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <Stethoscope className="mr-2 h-4 w-4 text-primary" />
+                        {specialist ? (
+                          specialists?.find((p) => p.name === specialist.name)
+                            ?.name
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Selecione o médico
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2">
+                    <Command>
+                      <CommandInput placeholder="Pesquise aqui..." />
+
+                      <CommandList>
+                        <CommandEmpty>Nenhum médico encontrado</CommandEmpty>
+                        <CommandGroup>
+                          {filteredDoctors?.map((doc) => (
+                            <CommandItem
+                              key={doc.id}
+                              onSelect={() => {
+                                setSpecialist(doc)
+                                setOpenPopover(null)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  doc.name === specialist?.name
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                              {doc.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </>
             )}
-            <Popover>
+            <Popover
+              open={openPopover === 'patient'}
+              onOpenChange={(isOpen) => handleOpenChange('patient', isOpen)}
+            >
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="patient name">Paciente</Label>
@@ -294,12 +402,6 @@ export function NewSchedule() {
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2">
                 <Command>
-                  <div className="p-4">
-                    <Button className="gap-3">
-                      <CirclePlus />
-                      <Label>Adicionar novo paciente</Label>
-                    </Button>
-                  </div>
                   <CommandInput placeholder="Pesquise aqui..." />
 
                   <CommandList>
@@ -314,6 +416,7 @@ export function NewSchedule() {
                               (p) => p.name === currentValue,
                             )
                             setPatient(selectedPatient)
+                            setOpenPopover(null)
                           }}
                         >
                           <Check
@@ -333,7 +436,10 @@ export function NewSchedule() {
               </PopoverContent>
             </Popover>
 
-            <Popover>
+            <Popover
+              open={openPopover === 'date'}
+              onOpenChange={(isOpen) => handleOpenChange('date', isOpen)}
+            >
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="schedule date">Data</Label>
@@ -357,7 +463,10 @@ export function NewSchedule() {
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={(date) => {
+                    setDate(date)
+                    setOpenPopover(null)
+                  }}
                   initialFocus
                   modifiers={{
                     disabled: (date) =>
