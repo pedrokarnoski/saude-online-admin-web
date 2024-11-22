@@ -151,10 +151,10 @@ export function NewSchedule() {
     },
   })
 
-  const [openPopover, setOpenPopover] = useState<string | null>(null)
+  const [isPopoverOpen, setIsPopoverOpen] = useState<string | null>(null)
 
   const handleOpenChange = (id: string, isOpen: boolean) => {
-    setOpenPopover(isOpen ? id : null)
+    setIsPopoverOpen(isOpen ? id : null)
   }
 
   const [specialty, setSpecialty] = useState<{
@@ -246,13 +246,13 @@ export function NewSchedule() {
           <div className="flex flex-col space-y-4">
             {user?.crm ? (
               <div className="space-y-1">
-                <Label htmlFor="medic name">Médico</Label>
+                <Label htmlFor="medicName">Médico</Label>
                 <Input className="h-12" disabled value={user?.name} />
               </div>
             ) : (
               <>
                 <Popover
-                  open={openPopover === 'specialty'}
+                  open={isPopoverOpen === 'specialty'}
                   onOpenChange={(isOpen) =>
                     handleOpenChange('specialty', isOpen)
                   }
@@ -290,7 +290,7 @@ export function NewSchedule() {
                                 key={spec.id}
                                 onSelect={() => {
                                   setSpecialty(spec)
-                                  setOpenPopover(null)
+                                  setIsPopoverOpen(null)
                                 }}
                               >
                                 <div className="flex w-full items-center">
@@ -316,14 +316,14 @@ export function NewSchedule() {
                 </Popover>
 
                 <Popover
-                  open={openPopover === 'specialist'}
+                  open={isPopoverOpen === 'specialist'}
                   onOpenChange={(isOpen) =>
                     handleOpenChange('specialist', isOpen)
                   }
                 >
                   <PopoverTrigger asChild>
                     <div className="flex flex-col gap-2">
-                      <Label htmlFor="patient name">Médico</Label>
+                      <Label htmlFor="medicName">Médico</Label>
                       <Button
                         size="lg"
                         variant="outline"
@@ -353,7 +353,7 @@ export function NewSchedule() {
                               key={doc.id}
                               onSelect={() => {
                                 setSpecialist(doc)
-                                setOpenPopover(null)
+                                setIsPopoverOpen(null)
                               }}
                             >
                               <Check
@@ -375,12 +375,12 @@ export function NewSchedule() {
               </>
             )}
             <Popover
-              open={openPopover === 'patient'}
+              open={isPopoverOpen === 'patient'}
               onOpenChange={(isOpen) => handleOpenChange('patient', isOpen)}
             >
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="patient name">Paciente</Label>
+                  <Label htmlFor="patientName">Paciente</Label>
                   <Button
                     size="lg"
                     variant="outline"
@@ -413,7 +413,7 @@ export function NewSchedule() {
                               (p) => p.name === currentValue,
                             )
                             setPatient(selectedPatient)
-                            setOpenPopover(null)
+                            setIsPopoverOpen(null)
                           }}
                         >
                           <Check
@@ -434,12 +434,12 @@ export function NewSchedule() {
             </Popover>
 
             <Popover
-              open={openPopover === 'date'}
+              open={isPopoverOpen === 'date'}
               onOpenChange={(isOpen) => handleOpenChange('date', isOpen)}
             >
               <PopoverTrigger asChild>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="schedule date">Data</Label>
+                  <Label htmlFor="scheduleDate">Data</Label>
                   <Button
                     variant="outline"
                     size="lg"
@@ -462,7 +462,7 @@ export function NewSchedule() {
                   selected={date}
                   onSelect={(date) => {
                     setDate(date)
-                    setOpenPopover(null)
+                    setIsPopoverOpen(null)
                   }}
                   initialFocus
                   modifiers={{
