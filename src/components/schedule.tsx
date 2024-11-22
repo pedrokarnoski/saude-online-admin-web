@@ -58,14 +58,14 @@ import {
 
 export const columns: ColumnDef<Schedule>[] = [
   {
-    accessorFn: (row) => row.patient.name,
-    id: 'patientName',
+    accessorKey: 'patientName',
     header: 'Nome do paciente',
-    cell: ({ row }) => (
-      <div className="w-80 capitalize">
-        <Label>{row.getValue('patientName')}</Label>
-      </div>
-    ),
+    cell: ({ row }) => <Label>{row.getValue('patientName')}</Label>,
+  },
+  {
+    accessorKey: 'specialtyName',
+    header: 'Doutor(a)',
+    cell: ({ row }) => <Label>{row.getValue('specialtyName')}</Label>,
   },
   {
     accessorKey: 'dateHour',
@@ -205,7 +205,7 @@ export function Schedule() {
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-3">
           <CalendarDays className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-semibold tracking-tight">Sua agenda</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Agenda</h1>
         </div>
 
         <Popover>
