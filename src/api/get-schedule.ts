@@ -1,20 +1,23 @@
 import { api } from '@/lib/axios'
 
-import type { PatientProps } from './get-user'
-
-export interface GetScheduleResponse {
-  schedules: {
-    id: string
-    patientId: string
-    patient: PatientProps[]
-    date: string
-    hour: string
-    createdAt: Date
-    updatedAt: Date
-  }
+export interface Patient {
+  id: string
+  name: string
 }
 
-export async function getSchedule() {
+export interface Schedule {
+  id: string
+  dateHour: string
+  value: string
+  patientName: string
+  patient: Patient
+}
+
+export interface GetScheduleResponse {
+  schedules: Schedule[]
+}
+
+export async function getSchedule(): Promise<Schedule[]> {
   const response = await api.get<GetScheduleResponse>('/schedules')
 
   return response.data.schedules
