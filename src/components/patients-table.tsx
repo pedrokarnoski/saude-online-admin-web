@@ -59,11 +59,11 @@ import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
 const newPatientForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
-  age: z.coerce
+  age: z
     .number()
-    .int()
-    .min(1, { message: 'Informe a idade do paciente.' })
-    .max(99),
+    .int('Idade deve ser um número inteiro.')
+    .min(0, 'Idade inválida.')
+    .max(120, 'Idade muito alta.'),
   document: z.string().refine(
     (doc) => {
       const cleanedDoc = doc.replace(/\D/g, '')
@@ -308,9 +308,9 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
                 <Label htmlFor="age">Idade</Label>
                 <Input
                   className="mt-1"
-                  maxLength={2}
+                  type="number"
                   placeholder="Idade do paciente"
-                  {...register('age')}
+                  {...register('age', { valueAsNumber: true })}
                 />
               </div>
               {errors.age && (
