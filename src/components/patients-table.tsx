@@ -1,16 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import {
-  ColumnDef,
-  ColumnFiltersState,
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
+  type SortingState,
   useReactTable,
-  VisibilityState,
+  type VisibilityState,
 } from '@tanstack/react-table'
 import {
   Ban,
@@ -18,7 +18,6 @@ import {
   ChevronRight,
   MoreHorizontal,
   Plus,
-  UserPen,
   UserPlus,
   UsersRound,
 } from 'lucide-react'
@@ -28,7 +27,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { deletePatient } from '@/api/delete-patient'
-import { type PatientProps } from '@/api/get-user'
+import type { PatientProps } from '@/api/get-user'
 import { registerPatient } from '@/api/register-patient'
 import { Button } from '@/components/ui/button'
 import {

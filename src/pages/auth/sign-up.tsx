@@ -64,7 +64,18 @@ export function SignUp() {
 
   const { data: specialties } = useQuery({
     queryKey: ['specialties'],
-    queryFn: getSpecialties,
+    queryFn: async () => {
+      const specialtiesArray = await getSpecialties()
+
+      if (Array.isArray(specialtiesArray)) {
+        return specialtiesArray.map((specialty) => ({
+          label: specialty.name,
+          value: specialty.id,
+        }))
+      }
+
+      return []
+    },
     staleTime: Infinity,
   })
 
