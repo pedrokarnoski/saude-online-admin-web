@@ -198,8 +198,6 @@ export function NewSchedule() {
       )
     : users
 
-  console.log(patients)
-
   async function handleCreateNewSchedule() {
     try {
       if (!patient || !date || !hour) {
@@ -220,7 +218,6 @@ export function NewSchedule() {
         dateHour,
       })
     } catch (error) {
-      console.log(error, 'error')
       const errorMessage = axiosErrorHandler(error)
       toast({
         variant: 'destructive',
