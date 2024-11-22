@@ -27,8 +27,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import type { Schedule } from '@/api/get-schedule'
 import { getSchedule } from '@/api/get-schedule'
-import type { PatientProps } from '@/api/get-user'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -55,13 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
-export type Schedule = {
-  id: string
-  dateHour: string
-  hour: string
-  patient: PatientProps
-}
 
 export const columns: ColumnDef<Schedule>[] = [
   {
