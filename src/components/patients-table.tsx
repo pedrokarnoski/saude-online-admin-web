@@ -115,11 +115,11 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
         </div>
       ),
     },
-    {
-      accessorKey: 'age',
-      header: 'Idade',
-      cell: ({ row }) => <Label>{row.getValue('age')} anos</Label>,
-    },
+    // {
+    //   accessorKey: 'age',
+    //   header: 'Idade',
+    //   cell: ({ row }) => <Label>{row.getValue('age')} anos</Label>,
+    // },
     {
       accessorKey: 'document',
       header: 'Documento',
@@ -152,10 +152,10 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <DropdownMenuItem className="gap-2" onClick={() => null}>
+                {/* <DropdownMenuItem className="gap-2" onClick={() => null}>
                   <UserPen className="size-4 text-primary" />
                   Editar
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="gap-2"

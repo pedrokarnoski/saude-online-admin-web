@@ -85,26 +85,38 @@ export function Prescription() {
           onSubmit={handleSubmit(handleCreatePrescription)}
         >
           <div ref={prescriptionRef}>
-            <div className="flex flex-row items-center gap-8">
-              <HeartPulse className="size-20 text-red-500 lg:size-36" />
-              <div className="w-full space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="medic name">Médico</Label>
-                  <Input className="h-12" disabled value={user?.name} />
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="crm">CRM</Label>
-                  <Input className="h-12" disabled value="" />
+            <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-row items-center gap-8 text-center">
+                <HeartPulse className="size-20 text-red-500 lg:size-36" />
+                <div className="w-full space-y-2">
+                  <div className="flex flex-col space-y-4">
+                    <Label className="text-2xl" htmlFor="clinic name">
+                      Clínica Saúde Online
+                    </Label>
+                    <Label
+                      className="text-muted-foreground"
+                      htmlFor="clinic address"
+                    >
+                      Rua da Prescrição n°1 Bairro Receita, Guarapuava/PR
+                    </Label>
+                    <Label
+                      className="text-muted-foreground"
+                      htmlFor="clinic infos"
+                    >
+                      CEP 00000-000 | Telefone (42) 99999-9999 | CNPJ
+                      00.000.000/0000-00
+                    </Label>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 space-y-2">
-              <h1 className="text-center text-2xl font-semibold tracking-tight">
-                Receituário
-              </h1>
-
+              <div className="my-8">
+                <Label className="text-xl" htmlFor="clinic name">
+                  {user?.name}
+                </Label>
+              </div>
               <div className="space-y-1">
                 <Label htmlFor="patient">Paciente</Label>
                 <Input
@@ -135,7 +147,10 @@ export function Prescription() {
               </p>
               <div className="flex items-center justify-end pt-20">
                 <div className="text-center">
+                  {/* Linha para assinatura */}
                   <div className="w-80 border-b border-black/50" />
+                  {/* Nome do médico abaixo da linha */}
+                  <p className="mt-2 text-sm font-semibold">{user?.name}</p>
                 </div>
               </div>
             </div>
