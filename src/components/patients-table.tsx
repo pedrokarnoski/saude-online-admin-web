@@ -16,6 +16,7 @@ import {
   Ban,
   ChevronLeft,
   ChevronRight,
+  History,
   MoreHorizontal,
   Plus,
   UserPlus,
@@ -29,6 +30,17 @@ import { z } from 'zod'
 import { deletePatient } from '@/api/delete-patient'
 import type { PatientProps } from '@/api/get-user'
 import { registerPatient } from '@/api/register-patient'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -151,18 +163,66 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                {/* <DropdownMenuItem className="gap-2" onClick={() => null}>
-                  <UserPen className="size-4 text-primary" />
-                  Editar
-                </DropdownMenuItem> */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className="gap-2"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <History className="size-4 text-primary" />
+                      Histórico
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Histórico</AlertDialogTitle>
+                      {/* <AlertDialogDescription>
+                        Tem certeza de que deseja excluir o paciente{' '}
+                        <strong>{patient.name}</strong>? Seu histórico será
+                        perdido. Esta ação não pode ser desfeita.
+                      </AlertDialogDescription> */}
+                    </AlertDialogHeader>
+                    <div>{/* <HistoricTable data={} /> */}</div>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Fechar</AlertDialogCancel>
+                      {/* <AlertDialogAction
+                        onClick={() => handleDeletePatient(patient.id)}
+                      >
+                        Confirmar
+                      </AlertDialogAction> */}
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={() => handleDeletePatient(patient.id)}
-                >
-                  <Ban className="size-4 text-rose-500" />
-                  Excluir
-                </DropdownMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className="gap-2"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Ban className="size-4 text-rose-500" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza de que deseja excluir o paciente{' '}
+                        <strong>{patient.name}</strong>? Seu histórico será
+                        perdido. Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDeletePatient(patient.id)}
+                      >
+                        Confirmar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
