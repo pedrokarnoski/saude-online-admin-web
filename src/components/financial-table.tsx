@@ -11,10 +11,10 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { ChevronLeft, ChevronRight, HistoryIcon } from 'lucide-react'
+import { BadgeDollarSign, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
-import type { PatientProps } from '@/api/get-user'
+import type { Schedule } from '@/api/get-schedule'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -26,24 +26,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-interface HistoricTableProps {
-  schedules?: PatientProps[]
-  examSchedule?: PatientProps[]
-}
-
-export function HistoricTable({ schedules, examSchedule }: HistoricTableProps) {
+export function FinancialTable({ data }: { data: Schedule[] }) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const scheduleColumns: ColumnDef<PatientProps>[] = [
+  const columns: ColumnDef<Schedule>[] = [
     {
-      accessorKey: 'specialistName',
-      header: 'Doutor(a)',
+      accessorKey: 'patientName',
+      header: 'Paciente',
       cell: ({ row }) => (
         <div className="w-48">
-          <Label>{row.getValue('specialistName')}</Label>
+          <Label>{row.getValue('patientName')}</Label>
         </div>
       ),
     },
@@ -60,49 +55,16 @@ export function HistoricTable({ schedules, examSchedule }: HistoricTableProps) {
       },
     },
     {
-      accessorKey: 'formattedValue',
+      accessorKey: 'value',
       header: 'Valor',
-      cell: ({ row }) => <Label>{row.getValue('formattedValue')}</Label>,
-    },
-  ]
-
-  const examScheduleColumns: ColumnDef<PatientProps>[] = [
-    {
-      accessorKey: 'examName',
-      header: 'Exame',
       cell: ({ row }) => (
-        <div className="w-48">
-          <Label>{row.getValue('examName')}</Label>
+        <div className="flex gap-8">
+          <Label>{row.getValue('value')}</Label>
+          <Label className="text-primary">PAGO</Label>
         </div>
       ),
     },
-    {
-      accessorKey: 'dateHour',
-      header: 'Data e hora',
-      cell: ({ row }) => {
-        const dateHour = row.getValue<string>('dateHour')
-        const formattedDate = dateHour
-          ? format(new Date(dateHour), "dd/MM/yyyy 'às' HH:mm")
-          : 'Data inválida'
-
-        return <Label>{formattedDate}</Label>
-      },
-    },
-    {
-      accessorKey: 'formattedValue',
-      header: 'Valor',
-      cell: ({ row }) => <Label>{row.getValue('formattedValue')}</Label>,
-    },
   ]
-
-  const data = [
-    ...(Array.isArray(schedules) ? schedules : []),
-    ...(Array.isArray(examSchedule) ? examSchedule : []),
-  ]
-
-  const columns = Array.isArray(schedules)
-    ? scheduleColumns
-    : examScheduleColumns
 
   const table = useReactTable({
     data,
@@ -132,14 +94,12 @@ export function HistoricTable({ schedules, examSchedule }: HistoricTableProps) {
     <div className="space-y-4">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-3">
-          <HistoryIcon className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Histórico de {Array.isArray(schedules) ? 'consultas' : 'exames'}
-          </h1>
+          <BadgeDollarSign className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
-        Consulte seu histórico de consultas e exames
+        Consulte seu histórico financeiro
       </p>
 
       <div>

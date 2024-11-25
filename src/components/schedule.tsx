@@ -1,18 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  ColumnDef,
-  ColumnFiltersState,
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
+  type SortingState,
   useReactTable,
-  VisibilityState,
+  type VisibilityState,
 } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { toZonedTime } from 'date-fns-tz'
 import {
   ArrowUpDown,
   Ban,
@@ -56,6 +57,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+const timezone = 'America/Sao_Paulo'
+
 export const columns: ColumnDef<Schedule>[] = [
   {
     accessorKey: 'patientName',
@@ -71,9 +74,13 @@ export const columns: ColumnDef<Schedule>[] = [
     accessorKey: 'dateHour',
     header: 'Data',
     cell: ({ row }) => {
-      const date = format(new Date(row.getValue('dateHour')), 'dd/MM/yyyy', {
-        locale: ptBR,
-      })
+      const date = format(
+        toZonedTime(new Date(row.getValue('dateHour')), timezone),
+        'dd/MM/yyyy',
+        {
+          locale: ptBR,
+        },
+      )
 
       return (
         <div>
