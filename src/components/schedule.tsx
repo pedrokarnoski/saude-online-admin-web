@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { toZonedTime } from 'date-fns-tz'
+import { formatInTimeZone } from 'date-fns-tz'
 import {
   ArrowUpDown,
   Ban,
@@ -57,8 +57,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const timezone = 'America/Sao_Paulo'
-
 export const columns: ColumnDef<Schedule>[] = [
   {
     accessorKey: 'patientName',
@@ -74,13 +72,9 @@ export const columns: ColumnDef<Schedule>[] = [
     accessorKey: 'dateHour',
     header: 'Data',
     cell: ({ row }) => {
-      const date = format(
-        toZonedTime(new Date(row.getValue('dateHour')), timezone),
-        'dd/MM/yyyy',
-        {
-          locale: ptBR,
-        },
-      )
+      const date = format(new Date(row.getValue('dateHour')), 'dd/MM/yyyy', {
+        locale: ptBR,
+      })
 
       return (
         <div>
@@ -104,11 +98,19 @@ export const columns: ColumnDef<Schedule>[] = [
       )
     },
     cell: ({ row }) => {
-      const time = format(new Date(row.getValue('dateHour')), 'HH:mm', {
+      const dateHour = row.getValue('dateHour') as string | number | Date
+
+      const timeZone = 'America/Sao_Paulo'
+
+      const time = formatInTimeZone(new Date(dateHour), timeZone, 'HH:mm', {
         locale: ptBR,
       })
 
-      const hour = new Date(row.getValue('dateHour')).getHours()
+      const hour = Number.parseInt(
+        formatInTimeZone(new Date(dateHour), timeZone, 'HH', {
+          locale: ptBR,
+        }),
+      )
 
       return (
         <div className="flex flex-row items-center gap-3">
