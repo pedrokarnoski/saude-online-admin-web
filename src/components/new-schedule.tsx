@@ -9,7 +9,7 @@ import {
   Stethoscope,
   UserRound,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getPatients } from '@/api/get-patients'
 import { getSpecialties } from '@/api/get-specialties'
@@ -134,7 +134,9 @@ export function NewSchedule() {
       setDate(undefined)
       setPatient(undefined)
       setHour(null)
-      setSpecialty(null)
+      setSpecialty(
+        user?.crm && Array.isArray(specialties) ? specialties[0] : null,
+      )
       setSpecialist(user?.crm ? user : null)
 
       toast({
@@ -168,6 +170,14 @@ export function NewSchedule() {
   const [patient, setPatient] = useState<PatientProps>()
   const [date, setDate] = useState<Date>()
   const [hour, setHour] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (user?.crm && Array.isArray(specialties) && specialties.length > 0) {
+      setSpecialty(specialties[0])
+    }
+  }, [user, specialties])
+
+  console.log(specialist)
 
   function sendMessageWhatsApp() {
     const phone = patient?.phone
