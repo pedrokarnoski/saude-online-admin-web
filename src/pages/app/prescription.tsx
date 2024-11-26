@@ -40,7 +40,7 @@ type NewPrescriptionForm = z.infer<typeof newPrescriptionForm>
 export function Prescription() {
   const { data: user } = useQuery({
     queryKey: ['user'],
-    queryFn: getUser,
+    queryFn: () => getUser({ userId: '' }),
     staleTime: Infinity,
   })
 

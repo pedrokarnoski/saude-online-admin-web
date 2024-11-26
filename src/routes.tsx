@@ -5,6 +5,7 @@ import { AuthLayout } from '@/pages/_layouts/auth'
 import { NotFound } from '@/pages/404'
 import { Anamnesis } from '@/pages/app/anamnesis'
 import { Financial } from '@/pages/app/financial'
+import { Historic } from '@/pages/app/historic'
 import { Home } from '@/pages/app/home'
 import { Patients } from '@/pages/app/patients'
 import { Prescription } from '@/pages/app/prescription'
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/anamnesis', element: <Anamnesis /> },
       { path: '/financial', element: <Financial /> },
+      { path: '/historic/:id', element: <Historic /> },
       { path: '/patients', element: <Patients /> },
       { path: '/prescription', element: <Prescription /> },
       { path: '/schedule', element: <Schedules /> },

@@ -25,6 +25,7 @@ import {
 import { cpfMask, rgMask } from 'masks-br'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { deletePatient } from '@/api/delete-patient'
@@ -109,12 +110,17 @@ type NewPatientForm = z.infer<typeof newPatientForm>
 
 export function PatientTable({ data }: { data: PatientProps[] }) {
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  const handleNavigateHistoric = (id: string) => {
+    navigate(`/historic/${id}`)
+  }
 
   const columns: ColumnDef<PatientProps>[] = [
     {
@@ -163,36 +169,15 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      className="gap-2"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <History className="size-4 text-primary" />
-                      Histórico
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Histórico</AlertDialogTitle>
-                      {/* <AlertDialogDescription>
-                        Tem certeza de que deseja excluir o paciente{' '}
-                        <strong>{patient.name}</strong>? Seu histórico será
-                        perdido. Esta ação não pode ser desfeita.
-                      </AlertDialogDescription> */}
-                    </AlertDialogHeader>
-                    <div>{/* <HistoricTable data={} /> */}</div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Fechar</AlertDialogCancel>
-                      {/* <AlertDialogAction
-                        onClick={() => handleDeletePatient(patient.id)}
-                      >
-                        Confirmar
-                      </AlertDialogAction> */}
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => handleNavigateHistoric(patient.id)}
+                >
+                  <History className="size-4 text-primary" />
+                  Histórico
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

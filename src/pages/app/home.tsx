@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import {
   BadgeDollarSign,
   CalendarHeart,
@@ -7,9 +8,16 @@ import {
 } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 
+import { getUser } from '@/api/get-user'
 import { FeatureCard } from '@/components/feature-card'
 
 export function Home() {
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: () => getUser({ userId: '' }),
+    staleTime: Infinity,
+  })
+
   return (
     <>
       <Helmet title="Home" />
@@ -37,12 +45,14 @@ export function Home() {
             description="Mantenha registros detalhados e organizados dos seus pacientes."
             to="patients"
           />
-          <FeatureCard
-            icon={Cross}
-            title="Anamnese"
-            description="Registre e acesse facilmente os históricos médicos dos seus pacientes."
-            to="anamnesis"
-          />
+          {user?.crm && (
+            <FeatureCard
+              icon={Cross}
+              title="Anamnese"
+              description="Registre e acesse facilmente os históricos médicos dos seus pacientes."
+              to="anamnesis"
+            />
+          )}
           <FeatureCard
             icon={NotebookPen}
             title="Receituário"

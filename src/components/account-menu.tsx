@@ -22,7 +22,7 @@ export function AccountMenu() {
 
   const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ['user'],
-    queryFn: getUser,
+    queryFn: () => getUser({ userId: '' }),
     staleTime: Infinity,
   })
 
