@@ -6,8 +6,8 @@ import { getSchedule } from '@/api/get-schedule'
 import { FinancialTable } from '@/components/financial-table'
 
 export function Financial() {
-  const { data: historic = [], isLoading: isLoadingHistoric } = useQuery({
-    queryKey: ['historic'],
+  const { data: financial = [], isLoading: isLoadingFinancial } = useQuery({
+    queryKey: ['financial'],
     queryFn: getSchedule,
     staleTime: Infinity,
   })
@@ -17,12 +17,12 @@ export function Financial() {
       <Helmet title="Financeiro" />
 
       <div className="px-0 md:px-8 lg:px-20">
-        {isLoadingHistoric ? (
+        {isLoadingFinancial ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <LoaderIcon className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <FinancialTable data={historic} />
+          <FinancialTable data={financial} />
         )}
       </div>
     </>

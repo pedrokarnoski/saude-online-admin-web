@@ -15,7 +15,7 @@ export function AppLayout() {
     isLoading,
   } = useQuery({
     queryKey: ['user'],
-    queryFn: getUser,
+    queryFn: () => getUser({ userId: '' }),
     retry: false,
   })
 
@@ -28,7 +28,7 @@ export function AppLayout() {
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
-        <Loader2 className="size-8 animate-spin" />
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }

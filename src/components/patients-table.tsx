@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -12,7 +12,6 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import {
   Ban,
   ChevronLeft,
@@ -24,12 +23,13 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { cpfMask, rgMask } from 'masks-br'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { deletePatient } from '@/api/delete-patient'
-import { getUser, type PatientProps } from '@/api/get-user'
+import type { PatientProps } from '@/api/get-user'
 import { registerPatient } from '@/api/register-patient'
 import {
   AlertDialog,
@@ -58,7 +58,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Separator } from '@/components/ui/separator'
 import {
   Table,
   TableBody,
@@ -67,12 +66,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { queryClient } from '@/lib/react-query'
 import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
-
-import { Card } from './ui/card'
 
 const newPatientForm = z.object({
   name: z.string().min(3, { message: 'Digite o nome completo.' }),
@@ -113,58 +109,18 @@ const newPatientForm = z.object({
 type NewPatientForm = z.infer<typeof newPatientForm>
 
 export function PatientTable({ data }: { data: PatientProps[] }) {
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null)
-  const [schedules, setSchedules] = useState<
-    { id: string; dateHour: string; specialistName: string }[]
-  >([])
-  const [exams, setExams] = useState<
-    { id: string; dateHour: string; examName: string }[]
-  >([])
-  const [anamneses, setAnamneses] = useState<
-    { id: string; dateHour: string; examName: string }[]
-  >([])
-
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => getUser({ userId: '' }),
-    staleTime: Infinity,
-  })
-
-  const { mutateAsync: getUserFn } = useMutation({
-    mutationFn: getUser,
-    onSuccess: (data): void => {
-      setSchedules(data.schedules)
-      setExams(data.examSchedule)
-      setAnamneses(data.anamneses)
-    },
-  })
-
-  useEffect(() => {
-    if (isHistoryModalOpen) {
-      const fetchProfile = async () => {
-        try {
-          await getUserFn({ userId: currentPatientId ?? '' })
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Erro',
-            description: 'Não foi possível carregar o perfil do paciente',
-          })
-        }
-      }
-
-      fetchProfile()
-    }
-  }, [isHistoryModalOpen, getUserFn, currentPatientId])
-
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  const handleNavigateHistoric = (id: string) => {
+    navigate(`/historic/${id}`)
+  }
 
   const columns: ColumnDef<PatientProps>[] = [
     {
@@ -202,10 +158,6 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
       cell: ({ row }) => {
         const patient = row.original
 
-        function handleCloseHistoryModal() {
-          window.location.reload()
-        }
-
         return (
           <div className="w-0">
             <DropdownMenu>
@@ -217,126 +169,15 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <AlertDialog
-                  open={isHistoryModalOpen}
-                  onOpenChange={(open) => {
-                    setIsHistoryModalOpen(open)
-                    if (open) {
-                      setCurrentPatientId(patient.id)
-                    }
-                  }}
+
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => handleNavigateHistoric(patient.id)}
                 >
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      className="gap-2"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <History className="size-4 text-primary" />
-                      Histórico
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="max-w-4xl">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Histórico</AlertDialogTitle>
-                    </AlertDialogHeader>
-                    <div>
-                      <Tabs defaultValue="consulta" className="space-y-4">
-                        <TabsList>
-                          <TabsTrigger value="consulta">Consultas</TabsTrigger>
-                          <TabsTrigger value="exame">Exames</TabsTrigger>
-                          {user?.crm && (
-                            <TabsTrigger value="anamnese">
-                              Anamneses
-                            </TabsTrigger>
-                          )}
-                        </TabsList>
+                  <History className="size-4 text-primary" />
+                  Histórico
+                </DropdownMenuItem>
 
-                        <TabsContent value="consulta">
-                          <Card className="p-4">
-                            {schedules.map((schedule, index) => (
-                              <ul key={schedule.id}>
-                                <li>
-                                  Dia{' '}
-                                  {format(
-                                    new Date(schedule.dateHour),
-                                    "dd/MM/yyyy 'às' HH:mm",
-                                  )}{' '}
-                                  com <Label>{schedule.specialistName}</Label>
-                                  {index < schedules.length - 1 && (
-                                    <Separator className="my-4" />
-                                  )}
-                                </li>
-                              </ul>
-                            ))}
-                          </Card>
-                        </TabsContent>
-
-                        <TabsContent value="exame">
-                          <Card className="p-4">
-                            {exams.map((exam, index) => (
-                              <ul key={exam.id}>
-                                <li>
-                                  Dia{' '}
-                                  {format(
-                                    new Date(exam.dateHour),
-                                    "dd/MM/yyyy 'às' HH:mm",
-                                  )}{' '}
-                                  - <Label>{exam.examName}</Label>
-                                  {index < exam.length - 1 && (
-                                    <Separator className="my-4" />
-                                  )}
-                                </li>
-                              </ul>
-                            ))}
-                          </Card>
-                        </TabsContent>
-
-                        <TabsContent value="anamnese">
-                          <Card className="p-4">
-                            {anamneses.map((anamnese, index) => (
-                              <ul key={anamnese.id}>
-                                <li>
-                                  <Label>Efetuada em:</Label>{' '}
-                                  {format(
-                                    new Date(anamnese.createdAt),
-                                    "dd/MM/yyyy 'às' HH:mm",
-                                  )}
-                                </li>
-                                <li>
-                                  <Label>Idade:</Label> {anamnese.age} anos
-                                </li>
-                                <li>
-                                  <Label>Peso:</Label> {anamnese.weight} kg
-                                </li>
-                                <li>
-                                  <Label>Altura:</Label> {anamnese.height} m
-                                </li>
-                                <li>
-                                  <Label>Sintomas:</Label> {anamnese.symptoms}
-                                </li>
-                                <li>
-                                  <Label>Histórico médico:</Label>{' '}
-                                  {anamnese.medicalHistory}
-                                </li>
-                                <li>
-                                  <Label>Alergias:</Label> {anamnese.allergies}
-                                  {index < anamneses.length - 1 && (
-                                    <Separator className="my-4" />
-                                  )}
-                                </li>
-                              </ul>
-                            ))}
-                          </Card>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogAction onClick={handleCloseHistoryModal}>
-                        Fechar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
                 <DropdownMenuSeparator />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

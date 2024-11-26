@@ -55,7 +55,7 @@ export function UserProfileSheet() {
 
   const { data: user } = useQuery({
     queryKey: ['user'],
-    queryFn: getUser,
+    queryFn: () => getUser({ userId: '' }),
     staleTime: Infinity,
   })
 
