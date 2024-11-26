@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { Frown, LoaderIcon } from 'lucide-react'
+import { Frown, Loader2 } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
@@ -33,7 +33,7 @@ export function Historic() {
       <div className="px-0 md:px-8 lg:px-20">
         {isLoadingHistoric ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <LoaderIcon className="size-8 animate-spin text-muted-foreground" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <div>

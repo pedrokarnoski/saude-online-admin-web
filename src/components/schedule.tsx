@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -28,8 +28,20 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { deleteSchedule } from '@/api/delete-schedule'
 import type { Schedule } from '@/api/get-schedule'
 import { getSchedule } from '@/api/get-schedule'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -56,8 +68,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useToast } from '@/components/ui/use-toast'
+import { queryClient } from '@/lib/react-query'
+import { axiosErrorHandler } from '@/utils/axiosErrorHandler'
 
-export const columns: ColumnDef<Schedule>[] = [
+function handleSendReminder(patientName: string, phone: string, date: string) {
+  const message = `Olá ${patientName}, este é um lembrete do seu agendamento em  ${date ? format(new Date(date), "PPP 'às' p", { locale: ptBR }) : 'data não definida'}.`
+  const formattedMessage = encodeURIComponent(message)
+  const whatsAppUrl = `https://wa.me/${phone}?text=${formattedMessage}`
+
+  window.open(whatsAppUrl, '_blank')
+}
+
+export const getColumns = (
+  handleDeleteSchedule: (id: string) => void,
+): ColumnDef<Schedule>[] => [
   {
     accessorKey: 'patientName',
     header: 'Nome do paciente',
@@ -127,7 +152,9 @@ export const columns: ColumnDef<Schedule>[] = [
   {
     id: 'actions',
     enableHiding: false,
-    cell: () => {
+    cell: ({ row }) => {
+      const patient = row.original
+
       return (
         <div className="w-0">
           <DropdownMenu>
@@ -139,15 +166,48 @@ export const columns: ColumnDef<Schedule>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem className="gap-3" onClick={() => null}>
-                <Ban />
-                Cancelar agendamento
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-3">
-                <MessageCircleWarning />
+              <DropdownMenuItem
+                className="gap-2"
+                onSelect={() =>
+                  handleSendReminder(
+                    patient.patientName,
+                    patient.patientPhone,
+                    patient.dateHour,
+                  )
+                }
+              >
+                <MessageCircleWarning className="size-5 text-primary" />
                 Enviar lembrete
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    className="gap-2"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Ban className="size-5 text-rose-500" />
+                    Cancelar agendamento
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar cancelamento</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza de que deseja cancelar o agendamento do{' '}
+                      <strong>{patient.patientName}</strong>?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteSchedule(patient.id)}
+                    >
+                      Confirmar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -157,11 +217,39 @@ export const columns: ColumnDef<Schedule>[] = [
 ]
 
 export function Schedule() {
+  const { toast } = useToast()
+
   const { data: schedule = [], isLoading: isLoadingSchedule } = useQuery({
     queryKey: ['schedules'],
     queryFn: getSchedule,
     staleTime: Infinity,
   })
+
+  const { mutateAsync: deleteScheduleFn } = useMutation({
+    mutationFn: deleteSchedule,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+    },
+  })
+
+  async function handleDeleteSchedule(id: string) {
+    try {
+      await deleteScheduleFn({ id })
+
+      toast({
+        variant: 'default',
+        title: 'Agendamento',
+        description: 'Agendamento excluído',
+      })
+    } catch (error) {
+      const errorMessage = axiosErrorHandler(error)
+      toast({
+        variant: 'destructive',
+        title: 'Agendamento',
+        description: errorMessage,
+      })
+    }
+  }
 
   const [dateHour, setDateHour] = useState<Date>(new Date())
   const [sorting, setSorting] = useState<SortingState>([])
@@ -170,6 +258,8 @@ export function Schedule() {
   ])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  const columns = getColumns(handleDeleteSchedule)
 
   const table = useReactTable({
     data: schedule as Schedule[],

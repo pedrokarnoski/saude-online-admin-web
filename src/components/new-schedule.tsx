@@ -177,8 +177,6 @@ export function NewSchedule() {
     }
   }, [user, specialties])
 
-  console.log(specialist)
-
   function sendMessageWhatsApp() {
     const phone = patient?.phone
 
