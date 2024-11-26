@@ -23,8 +23,15 @@ export interface GetUserResponse {
   }
 }
 
-export async function getUser() {
-  const response = await api.get<GetUserResponse>('/me')
+interface GetUserProps {
+  userId?: string
+}
+
+export async function getUser({ userId = '' }: GetUserProps) {
+  // Se userId for fornecido, a rota será modificada
+  const endpoint = userId?.length ? `/me?userId=${userId}` : '/me'
+
+  const response = await api.get<GetUserResponse>(endpoint)
 
   return response.data.user
 }
