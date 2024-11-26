@@ -22,7 +22,7 @@ import {
   UserPlus,
   UsersRound,
 } from 'lucide-react'
-import { cpfMask, rgMask } from 'masks-br'
+import { cpfMask, rgMask, telefoneMask } from 'masks-br'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -132,11 +132,11 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
         </div>
       ),
     },
-    // {
-    //   accessorKey: 'age',
-    //   header: 'Idade',
-    //   cell: ({ row }) => <Label>{row.getValue('age')} anos</Label>,
-    // },
+    {
+      accessorKey: 'phone',
+      header: 'Telefone',
+      cell: ({ row }) => <Label>{telefoneMask(row.getValue('phone'))}</Label>,
+    },
     {
       accessorKey: 'document',
       header: 'Documento',
@@ -169,15 +169,13 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-
                 <DropdownMenuItem
                   className="gap-2"
                   onSelect={() => handleNavigateHistoric(patient.id)}
                 >
-                  <History className="size-4 text-primary" />
+                  <History className="size-5 text-primary" />
                   Histórico
                 </DropdownMenuItem>
-
                 <DropdownMenuSeparator />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -185,7 +183,7 @@ export function PatientTable({ data }: { data: PatientProps[] }) {
                       className="gap-2"
                       onSelect={(e) => e.preventDefault()}
                     >
-                      <Ban className="size-4 text-rose-500" />
+                      <Ban className="size-5 text-rose-500" />
                       Excluir
                     </DropdownMenuItem>
                   </AlertDialogTrigger>

@@ -10,6 +10,7 @@ export interface Schedule {
   dateHour: string
   value: string
   patientName: string
+  patientPhone: string
   patient: Patient
 }
 
