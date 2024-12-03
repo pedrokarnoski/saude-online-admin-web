@@ -11,9 +11,8 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table'
-import { format } from 'date-fns'
+import { format, formatISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { formatInTimeZone } from 'date-fns-tz'
 import {
   ArrowUpDown,
   Ban,
@@ -125,17 +124,9 @@ export const getColumns = (
     cell: ({ row }) => {
       const dateHour = row.getValue('dateHour') as string | number | Date
 
-      const timeZone = 'America/Sao_Paulo'
+      const time = formatISO(new Date(dateHour)).split('T')[1].slice(0, 5)
 
-      const time = formatInTimeZone(new Date(dateHour), timeZone, 'HH:mm', {
-        locale: ptBR,
-      })
-
-      const hour = Number.parseInt(
-        formatInTimeZone(new Date(dateHour), timeZone, 'HH', {
-          locale: ptBR,
-        }),
-      )
+      const hour = new Date(dateHour).getHours()
 
       return (
         <div className="flex flex-row items-center gap-3">
